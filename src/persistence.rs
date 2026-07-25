@@ -34,6 +34,7 @@ use tokio::sync::RwLock;
 #[derive(Clone)]
 struct PreservedServerSettings {
     enable_ui: bool,
+    index_memory_budget_mb: Option<u64>,
     plugin_registry: Option<String>,
     auto_install_plugins: bool,
     plugins: Vec<PluginDependency>,
@@ -175,6 +176,7 @@ impl ConfigPersistence {
             solutions_dir,
             preserved: PreservedServerSettings {
                 enable_ui: original_config.enable_ui,
+                index_memory_budget_mb: original_config.index_memory_budget_mb,
                 plugin_registry: original_config.plugin_registry.clone(),
                 auto_install_plugins: original_config.auto_install_plugins,
                 plugins: original_config.plugins.clone(),
@@ -490,6 +492,7 @@ impl ConfigPersistence {
                 persist_index: instance.persist_index,
                 enable_archive: instance.enable_archive,
                 enable_ui: self.preserved.enable_ui,
+                index_memory_budget_mb: self.preserved.index_memory_budget_mb,
                 solutions_dir: self.solutions_dir.clone(),
                 state_store: instance.state_store,
                 secret_store: instance.secret_store,
@@ -529,6 +532,7 @@ impl ConfigPersistence {
                 persist_index: false, // Per-instance setting in multi-instance mode
                 enable_archive: false, // Per-instance setting in multi-instance mode
                 enable_ui: self.preserved.enable_ui,
+                index_memory_budget_mb: self.preserved.index_memory_budget_mb,
                 solutions_dir: self.solutions_dir.clone(),
                 state_store: None,  // Per-instance setting in multi-instance mode
                 secret_store: None, // Per-instance setting in multi-instance mode
@@ -1218,6 +1222,7 @@ mod tests {
         // Create a config with non-default server-level settings
         let original_config = DrasiServerConfig {
             enable_ui: false,
+            index_memory_budget_mb: None,
             plugin_registry: Some("my-registry.io/plugins".to_string()),
             auto_install_plugins: true,
             plugins: vec![PluginDependency {

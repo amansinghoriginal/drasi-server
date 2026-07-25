@@ -341,6 +341,10 @@ impl DrasiServer {
         // Resolve server settings using the mapper
         let mapper = DtoMapper::new();
         let resolved_settings = map_server_settings(&config, &mapper)?;
+        // Shared process-wide RocksDB index memory budget (one cache + write
+        // buffer pool across all instances).
+        crate::index_provider::init_index_memory_budget(config.index_memory_budget_mb);
+
         let resolved_instances = config.resolved_instances(&mapper)?;
 
         // Determine persistence and read-only status

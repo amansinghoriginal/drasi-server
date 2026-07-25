@@ -70,6 +70,13 @@ pub struct DrasiServerConfig {
     /// so leave this off unless queries use the past() functions.
     #[serde(default = "default_enable_archive")]
     pub enable_archive: bool,
+    /// Total memory budget in MiB for persistent (RocksDB) query indexes,
+    /// shared process-wide across all instances and queries: one block cache
+    /// of this size, with the memtable budget charged against it. Per-CF
+    /// write buffer sizes also scale with this budget (larger budget means
+    /// fewer flushes and less write amplification). Default: 256.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub index_memory_budget_mb: Option<u64>,
     /// Enable the web UI at /ui (default: true)
     #[serde(default = "default_enable_ui")]
     pub enable_ui: bool,
@@ -164,6 +171,7 @@ impl Default for DrasiServerConfig {
             persist_config: true,
             persist_index: false,
             enable_archive: false,
+            index_memory_budget_mb: None,
             enable_ui: true,
             solutions_dir: None,
             state_store: None,

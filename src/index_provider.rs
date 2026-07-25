@@ -23,7 +23,8 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use drasi_index_rocksdb::RocksDbIndexProvider;
+use drasi_index_rocksdb::{RocksDbIndexProvider, RocksDbTuning};
+use std::sync::OnceLock;
 use drasi_lib::DrasiLibBuilder;
 use log::info;
 
@@ -55,6 +56,28 @@ pub(crate) fn instance_index_dir(instance_id: &str) -> PathBuf {
 /// by both server startup and the create-instance API handler. Every query in
 /// the instance without an explicit `storageBackend` is persisted to
 /// `./data/<instanceId>/index` (see [`instance_index_dir`]).
+/// Process-wide RocksDB memory tuning: one shared block cache and write
+/// buffer manager for every instance's index provider. Memory is a
+/// process-scoped resource, so the budget is global rather than per instance.
+static SHARED_TUNING: OnceLock<RocksDbTuning> = OnceLock::new();
+
+/// Initialize the shared index memory budget from server config. Later calls
+/// are no-ops (the first server startup wins); apply_rocksdb_index falls back
+/// to the library default budget when this was never called.
+pub(crate) fn init_index_memory_budget(budget_mb: Option<u64>) {
+    if let Some(mb) = budget_mb {
+        let cache_bytes = (mb as usize) * 1024 * 1024;
+        // The write buffer budget is charged against the cache, so the cache
+        // size is the single bounding number; half of it may be memtables.
+        let tuning = RocksDbTuning::with_budgets(cache_bytes, cache_bytes / 2);
+        let _ = SHARED_TUNING.set(tuning);
+    }
+}
+
+fn shared_tuning() -> RocksDbTuning {
+    SHARED_TUNING.get_or_init(RocksDbTuning::default).clone()
+}
+
 pub(crate) fn apply_rocksdb_index(
     builder: DrasiLibBuilder,
     instance_id: &str,
@@ -65,10 +88,11 @@ pub(crate) fn apply_rocksdb_index(
         "Enabling persistent indexing for instance '{instance_id}' with RocksDB at: {} (archive: {enable_archive})",
         index_path.display()
     );
-    let provider = RocksDbIndexProvider::new(
+    let provider = RocksDbIndexProvider::with_tuning(
         index_path,
         enable_archive, // archive index for past() functions, off by default
         false,          // direct_io - use OS page cache
+        shared_tuning(),
     );
     builder.with_default_index_provider(PERSISTENT_INDEX_PROVIDER_NAME, Arc::new(provider))
 }
