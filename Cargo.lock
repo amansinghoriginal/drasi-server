@@ -354,17 +354,16 @@ dependencies = [
 
 [[package]]
 name = "bindgen"
-version = "0.65.1"
+version = "0.69.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cfdf7b466f9a4903edc73f95d6d2bcd5baf8ae620638762244d3f60143643cc5"
+checksum = "271383c67ccabffb7381723dea0672a673f292304fcb45c01cc648c7a8d58088"
 dependencies = [
- "bitflags 1.3.2",
+ "bitflags 2.11.1",
  "cexpr",
  "clang-sys",
+ "itertools 0.12.1",
  "lazy_static",
  "lazycell",
- "peeking_take_while",
- "prettyplease",
  "proc-macro2",
  "quote",
  "regex",
@@ -1159,8 +1158,7 @@ dependencies = [
 [[package]]
 name = "drasi-core"
 version = "0.5.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fae0da1b998ef09ab1115cc5b8c09b4d82305d8d432961c869db700ef69fbc19"
+source = "git+https://github.com/amansinghoriginal/drasi-core?branch=634-idle-flush#2d703aa5163e9fe39f8af2279539452dfa9061e9"
 dependencies = [
  "approx",
  "async-recursion",
@@ -1207,8 +1205,7 @@ checksum = "34fcfb2ad8c4d0140eda6dfaabaf5fad996923f9bdb7cd6e6a4d44e3a1b28088"
 [[package]]
 name = "drasi-functions-cypher"
 version = "0.5.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "839da21be5fc2115fa11599f72df6e37cec89391b35d2a0e6defc42098e205a3"
+source = "git+https://github.com/amansinghoriginal/drasi-core?branch=634-idle-flush#2d703aa5163e9fe39f8af2279539452dfa9061e9"
 dependencies = [
  "drasi-core",
 ]
@@ -1216,8 +1213,7 @@ dependencies = [
 [[package]]
 name = "drasi-functions-gql"
 version = "0.5.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "33fa471da6c513979dabc7ddb7c2b69df75d07fa7e6856c0afb9ce57a87dee76"
+source = "git+https://github.com/amansinghoriginal/drasi-core?branch=634-idle-flush#2d703aa5163e9fe39f8af2279539452dfa9061e9"
 dependencies = [
  "drasi-core",
 ]
@@ -1261,8 +1257,7 @@ dependencies = [
 [[package]]
 name = "drasi-index-rocksdb"
 version = "0.5.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ac63be55f0699830a14ef87b06196d7dd67ec608f84bccafb5fc965a90858c35"
+source = "git+https://github.com/amansinghoriginal/drasi-core?branch=634-idle-flush#2d703aa5163e9fe39f8af2279539452dfa9061e9"
 dependencies = [
  "async-stream",
  "async-trait",
@@ -1288,8 +1283,7 @@ dependencies = [
 [[package]]
 name = "drasi-lib"
 version = "0.8.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "863f443ed29d748b3ddf8a65f6cdbcd752e59bf74f9db467cd817bee35896621"
+source = "git+https://github.com/amansinghoriginal/drasi-core?branch=634-idle-flush#2d703aa5163e9fe39f8af2279539452dfa9061e9"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1326,8 +1320,7 @@ dependencies = [
 [[package]]
 name = "drasi-middleware"
 version = "0.5.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b2f0f50afaee2d7a562f7cc736832a48e93c2daf3d22db59ebd793eec5bfb257"
+source = "git+https://github.com/amansinghoriginal/drasi-core?branch=634-idle-flush#2d703aa5163e9fe39f8af2279539452dfa9061e9"
 dependencies = [
  "async-trait",
  "base64 0.22.1",
@@ -1372,8 +1365,7 @@ dependencies = [
 [[package]]
 name = "drasi-query-ast"
 version = "0.3.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4f2621be8fade50d49f1ef475e0f5f7e4bd5f4ac60983fca5b4d46f2ea307087"
+source = "git+https://github.com/amansinghoriginal/drasi-core?branch=634-idle-flush#2d703aa5163e9fe39f8af2279539452dfa9061e9"
 dependencies = [
  "serde",
  "serde_json",
@@ -1383,8 +1375,7 @@ dependencies = [
 [[package]]
 name = "drasi-query-cypher"
 version = "0.3.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e45aa57f6e9e997a26b1266f92f69abf4f10ebe69d2f5ffc193a7ca2a6a416ae"
+source = "git+https://github.com/amansinghoriginal/drasi-core?branch=634-idle-flush#2d703aa5163e9fe39f8af2279539452dfa9061e9"
 dependencies = [
  "drasi-query-ast",
  "peg",
@@ -1395,8 +1386,7 @@ dependencies = [
 [[package]]
 name = "drasi-query-gql"
 version = "0.3.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "023cb055fb27d8b8a033becf33811bb914c6151340e0efda56972367937885c8"
+source = "git+https://github.com/amansinghoriginal/drasi-core?branch=634-idle-flush#2d703aa5163e9fe39f8af2279539452dfa9061e9"
 dependencies = [
  "drasi-query-ast",
  "peg",
@@ -2868,11 +2858,11 @@ dependencies = [
 
 [[package]]
 name = "librocksdb-sys"
-version = "0.11.0+8.1.1"
+version = "0.16.0+8.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d3386f101bcb4bd252d8e9d2fb41ec3b0862a15a62b478c355b2982efa469e3e"
+checksum = "ce3d60bc059831dc1c83903fb45c103f75db65c5a7bf22272764d9cc683e348c"
 dependencies = [
- "bindgen 0.65.1",
+ "bindgen 0.69.5",
  "bzip2-sys",
  "cc",
  "glob",
@@ -3553,12 +3543,6 @@ dependencies = [
  "smallvec",
  "windows-link",
 ]
-
-[[package]]
-name = "peeking_take_while"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "19b17cddbe7ec3f8bc800887bab5e717348c95ea2ca0b1bf0837fb964dc67099"
 
 [[package]]
 name = "peg"
@@ -4522,9 +4506,9 @@ dependencies = [
 
 [[package]]
 name = "rocksdb"
-version = "0.21.0"
+version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bb6f170a4041d50a0ce04b0d2e14916d6ca863ea2e422689a5b694395d299ffe"
+checksum = "6bd13e55d6d7b8cd0ea569161127567cd587676c99f4472f779a0279aa60a7a7"
 dependencies = [
  "libc",
  "librocksdb-sys",
