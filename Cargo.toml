@@ -170,3 +170,14 @@ large_enum_variant = "allow"
 drasi-core = { git = "https://github.com/amansinghoriginal/drasi-core", branch = "preview-mem-core-4" }
 drasi-lib = { git = "https://github.com/amansinghoriginal/drasi-core", branch = "preview-mem-core-4" }
 drasi-index-rocksdb = { git = "https://github.com/amansinghoriginal/drasi-core", branch = "preview-mem-core-4" }
+
+# Preview diagnostic (mem.5): jemalloc allocator + heap profiling. Not on
+# Windows (jemalloc unsupported there).
+[target.'cfg(not(windows))'.dependencies]
+tikv-jemallocator = { version = "0.6", features = ["profiling", "stats", "background_threads", "unprefixed_malloc_on_supported_platforms"] }
+tikv-jemalloc-ctl = { version = "0.6", features = ["stats"] }
+
+# Keep enough debug info in release builds to symbolize jemalloc heap
+# profiles (jeprof) — diagnostic preview builds only.
+[profile.release]
+debug = 1

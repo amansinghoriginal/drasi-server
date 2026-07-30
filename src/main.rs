@@ -23,6 +23,46 @@ use std::path::PathBuf;
 use std::process::Command;
 
 use drasi_lib::get_or_init_global_registry;
+
+// Preview diagnostic (mem.5): jemalloc as the global allocator on non-Windows
+// targets — better RSS behavior on churn-heavy workloads (time-based decay
+// returns freed pages to the OS) and, with `_RJEM_MALLOC_CONF=prof:true,...`,
+// sampled heap profiling that attributes live bytes to call sites.
+#[cfg(not(windows))]
+#[global_allocator]
+static GLOBAL_ALLOC: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
+
+/// Log jemalloc's allocated (live bytes the program holds) vs resident (what
+/// the OS sees) every 30s. The gap between the two is allocator retention /
+/// fragmentation — the number that distinguishes "the process holds N GiB of
+/// live data" from "the allocator is hoarding freed memory".
+#[cfg(not(windows))]
+fn spawn_jemalloc_stats_logger() {
+    tokio::spawn(async move {
+        let mut interval = tokio::time::interval(std::time::Duration::from_secs(30));
+        interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
+        const MIB: usize = 1024 * 1024;
+        loop {
+            interval.tick().await;
+            if tikv_jemalloc_ctl::epoch::advance().is_err() {
+                continue;
+            }
+            let allocated = tikv_jemalloc_ctl::stats::allocated::read().unwrap_or(0);
+            let resident = tikv_jemalloc_ctl::stats::resident::read().unwrap_or(0);
+            let active = tikv_jemalloc_ctl::stats::active::read().unwrap_or(0);
+            info!(
+                "jemalloc: allocated {} MiB, active {} MiB, resident {} MiB (retention/fragmentation ~{} MiB)",
+                allocated / MIB,
+                active / MIB,
+                resident / MIB,
+                resident.saturating_sub(allocated) / MIB,
+            );
+        }
+    });
+}
+
+#[cfg(windows)]
+fn spawn_jemalloc_stats_logger() {}
 use drasi_server::api::mappings::{map_server_settings, DtoMapper};
 use drasi_server::api::models::ConfigValue;
 use drasi_server::{load_config_file, save_config_file, DrasiServer, DrasiServerConfig};
@@ -134,6 +174,7 @@ enum Commands {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    spawn_jemalloc_stats_logger();
     let cli = Cli::parse();
 
     match cli.command {
