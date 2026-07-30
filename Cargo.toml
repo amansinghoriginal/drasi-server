@@ -164,9 +164,9 @@ large_enum_variant = "allow"
 # drasi-host-sdk = { path = "../drasi-core/components/host-sdk" }
 
 # PREVIEW BUILD: memory fixes from drasi-core#634 (pending release).
-# Sources the patched crates from the fork branch that backs PR drasi-core#637
+# Sources the patched crates from the fork integration branch (idle-flush + bootstrap-backpressure)
 # plus the idle-flush sweeper.
 [patch.crates-io]
-drasi-core = { git = "https://github.com/amansinghoriginal/drasi-core", branch = "634-idle-flush" }
-drasi-lib = { git = "https://github.com/amansinghoriginal/drasi-core", branch = "634-idle-flush" }
-drasi-index-rocksdb = { git = "https://github.com/amansinghoriginal/drasi-core", branch = "634-idle-flush" }
+drasi-core = { git = "https://github.com/amansinghoriginal/drasi-core", branch = "preview-mem-core" }
+drasi-lib = { git = "https://github.com/amansinghoriginal/drasi-core", branch = "preview-mem-core" }
+drasi-index-rocksdb = { git = "https://github.com/amansinghoriginal/drasi-core", branch = "preview-mem-core" }

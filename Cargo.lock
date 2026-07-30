@@ -1158,7 +1158,7 @@ dependencies = [
 [[package]]
 name = "drasi-core"
 version = "0.5.7"
-source = "git+https://github.com/amansinghoriginal/drasi-core?branch=634-idle-flush#2d703aa5163e9fe39f8af2279539452dfa9061e9"
+source = "git+https://github.com/amansinghoriginal/drasi-core?branch=preview-mem-core#123ed0d48fe52292fd998590c86d17ef8ac121b6"
 dependencies = [
  "approx",
  "async-recursion",
@@ -1205,7 +1205,7 @@ checksum = "34fcfb2ad8c4d0140eda6dfaabaf5fad996923f9bdb7cd6e6a4d44e3a1b28088"
 [[package]]
 name = "drasi-functions-cypher"
 version = "0.5.7"
-source = "git+https://github.com/amansinghoriginal/drasi-core?branch=634-idle-flush#2d703aa5163e9fe39f8af2279539452dfa9061e9"
+source = "git+https://github.com/amansinghoriginal/drasi-core?branch=preview-mem-core#123ed0d48fe52292fd998590c86d17ef8ac121b6"
 dependencies = [
  "drasi-core",
 ]
@@ -1213,7 +1213,7 @@ dependencies = [
 [[package]]
 name = "drasi-functions-gql"
 version = "0.5.7"
-source = "git+https://github.com/amansinghoriginal/drasi-core?branch=634-idle-flush#2d703aa5163e9fe39f8af2279539452dfa9061e9"
+source = "git+https://github.com/amansinghoriginal/drasi-core?branch=preview-mem-core#123ed0d48fe52292fd998590c86d17ef8ac121b6"
 dependencies = [
  "drasi-core",
 ]
@@ -1257,7 +1257,7 @@ dependencies = [
 [[package]]
 name = "drasi-index-rocksdb"
 version = "0.5.8"
-source = "git+https://github.com/amansinghoriginal/drasi-core?branch=634-idle-flush#2d703aa5163e9fe39f8af2279539452dfa9061e9"
+source = "git+https://github.com/amansinghoriginal/drasi-core?branch=preview-mem-core#123ed0d48fe52292fd998590c86d17ef8ac121b6"
 dependencies = [
  "async-stream",
  "async-trait",
@@ -1283,7 +1283,7 @@ dependencies = [
 [[package]]
 name = "drasi-lib"
 version = "0.8.9"
-source = "git+https://github.com/amansinghoriginal/drasi-core?branch=634-idle-flush#2d703aa5163e9fe39f8af2279539452dfa9061e9"
+source = "git+https://github.com/amansinghoriginal/drasi-core?branch=preview-mem-core#123ed0d48fe52292fd998590c86d17ef8ac121b6"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1320,7 +1320,7 @@ dependencies = [
 [[package]]
 name = "drasi-middleware"
 version = "0.5.8"
-source = "git+https://github.com/amansinghoriginal/drasi-core?branch=634-idle-flush#2d703aa5163e9fe39f8af2279539452dfa9061e9"
+source = "git+https://github.com/amansinghoriginal/drasi-core?branch=preview-mem-core#123ed0d48fe52292fd998590c86d17ef8ac121b6"
 dependencies = [
  "async-trait",
  "base64 0.22.1",
@@ -1365,7 +1365,7 @@ dependencies = [
 [[package]]
 name = "drasi-query-ast"
 version = "0.3.5"
-source = "git+https://github.com/amansinghoriginal/drasi-core?branch=634-idle-flush#2d703aa5163e9fe39f8af2279539452dfa9061e9"
+source = "git+https://github.com/amansinghoriginal/drasi-core?branch=preview-mem-core#123ed0d48fe52292fd998590c86d17ef8ac121b6"
 dependencies = [
  "serde",
  "serde_json",
@@ -1375,7 +1375,7 @@ dependencies = [
 [[package]]
 name = "drasi-query-cypher"
 version = "0.3.6"
-source = "git+https://github.com/amansinghoriginal/drasi-core?branch=634-idle-flush#2d703aa5163e9fe39f8af2279539452dfa9061e9"
+source = "git+https://github.com/amansinghoriginal/drasi-core?branch=preview-mem-core#123ed0d48fe52292fd998590c86d17ef8ac121b6"
 dependencies = [
  "drasi-query-ast",
  "peg",
@@ -1386,7 +1386,7 @@ dependencies = [
 [[package]]
 name = "drasi-query-gql"
 version = "0.3.6"
-source = "git+https://github.com/amansinghoriginal/drasi-core?branch=634-idle-flush#2d703aa5163e9fe39f8af2279539452dfa9061e9"
+source = "git+https://github.com/amansinghoriginal/drasi-core?branch=preview-mem-core#123ed0d48fe52292fd998590c86d17ef8ac121b6"
 dependencies = [
  "drasi-query-ast",
  "peg",
