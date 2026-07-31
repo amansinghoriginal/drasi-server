@@ -170,6 +170,17 @@ large_enum_variant = "allow"
 drasi-core = { git = "https://github.com/amansinghoriginal/drasi-core", branch = "preview-mem-core-7" }
 drasi-lib = { git = "https://github.com/amansinghoriginal/drasi-core", branch = "preview-mem-core-7" }
 drasi-index-rocksdb = { git = "https://github.com/amansinghoriginal/drasi-core", branch = "preview-mem-core-7" }
+# host-sdk carries the bounded plugin-log capture ring and the bounded
+# bootstrap FFI bridge. Without this entry it silently resolves from
+# crates.io 0.10.0, whose unbounded Vec<CapturedLog> retains every plugin
+# log record for the life of the process (jemalloc-profiled at 4.4 GiB
+# live on a 10k-event replay: 2.9 GiB message copies + 1.8 GiB Vec buffer).
+drasi-host-sdk = { git = "https://github.com/amansinghoriginal/drasi-core", branch = "preview-mem-core-7" }
+# plugin-sdk must come from the SAME source as host-sdk: the descriptor
+# traits are implemented by host-sdk proxies, and two copies of the crate
+# (git via host-sdk + crates.io via our direct dep) are distinct types —
+# trait methods "not found" and Arc<dyn …> casts fail (E0599/E0277).
+drasi-plugin-sdk = { git = "https://github.com/amansinghoriginal/drasi-core", branch = "preview-mem-core-7" }
 
 # Diagnostic preview: keep DWARF line tables in release builds so jemalloc
 # heap profiles symbolize exactly (function + file:line, including inlined
