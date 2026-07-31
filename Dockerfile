@@ -75,6 +75,21 @@ RUN JQ_LIB_DIR=$(dirname $(find /usr/lib -name 'libjq.so' | head -1)) \
 # =============================================================================
 # Stage 3: Runtime Environment
 # =============================================================================
+# Build a profiling-enabled shared jemalloc for runtime LD_PRELOAD. Preloading
+# replaces malloc process-wide — the server binary AND the dlopened plugin
+# cdylibs bind to the same allocator — which is the only safe way to change
+# the allocator in a plugin-host process: a Rust #[global_allocator] swap
+# splits the process into two heaps and crashes on FFI ownership transfers.
+FROM debian:bookworm-slim AS jemalloc-builder
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential autoconf curl ca-certificates bzip2 \
+    && rm -rf /var/lib/apt/lists/*
+RUN curl -sSL https://github.com/jemalloc/jemalloc/releases/download/5.3.0/jemalloc-5.3.0.tar.bz2 | tar xj -C /tmp \
+    && cd /tmp/jemalloc-5.3.0 \
+    && ./configure --enable-prof --disable-initial-exec-tls \
+    && make -j"$(nproc)" lib/libjemalloc.so.2 \
+    && cp lib/libjemalloc.so.2 /libjemalloc.so.2
+
 FROM debian:bookworm-slim AS runtime
 
 # Install runtime dependencies
@@ -92,6 +107,13 @@ WORKDIR /app
 
 # Copy binary from builder
 COPY --from=builder /app/target/release/drasi-server /usr/local/bin/drasi-server
+
+# jemalloc as the process-wide allocator: returns freed pages to the OS
+# (glibc arena retention pinned RSS at the high-water mark on churn-heavy
+# workloads). Heap profiling support is compiled in but inactive by default —
+# activate per-container via MALLOC_CONF (e.g. prof:true,lg_prof_interval:32).
+COPY --from=jemalloc-builder /libjemalloc.so.2 /usr/local/lib/libjemalloc.so.2
+ENV LD_PRELOAD=/usr/local/lib/libjemalloc.so.2
 
 # Copy built UI from ui-builder
 COPY --from=ui-builder /app/ui/dist /app/ui/dist
