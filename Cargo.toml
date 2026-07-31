@@ -167,6 +167,6 @@ large_enum_variant = "allow"
 # Sources the patched crates from the fork integration branch (idle-flush + bootstrap-backpressure)
 # plus the idle-flush sweeper.
 [patch.crates-io]
-drasi-core = { git = "https://github.com/amansinghoriginal/drasi-core", branch = "preview-mem-core-5" }
-drasi-lib = { git = "https://github.com/amansinghoriginal/drasi-core", branch = "preview-mem-core-5" }
-drasi-index-rocksdb = { git = "https://github.com/amansinghoriginal/drasi-core", branch = "preview-mem-core-5" }
+drasi-core = { git = "https://github.com/amansinghoriginal/drasi-core", branch = "preview-mem-core-6" }
+drasi-lib = { git = "https://github.com/amansinghoriginal/drasi-core", branch = "preview-mem-core-6" }
+drasi-index-rocksdb = { git = "https://github.com/amansinghoriginal/drasi-core", branch = "preview-mem-core-6" }
