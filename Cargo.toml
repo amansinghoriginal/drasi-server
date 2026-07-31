@@ -170,3 +170,9 @@ large_enum_variant = "allow"
 drasi-core = { git = "https://github.com/amansinghoriginal/drasi-core", branch = "preview-mem-core-6" }
 drasi-lib = { git = "https://github.com/amansinghoriginal/drasi-core", branch = "preview-mem-core-6" }
 drasi-index-rocksdb = { git = "https://github.com/amansinghoriginal/drasi-core", branch = "preview-mem-core-6" }
+
+# Diagnostic preview: keep DWARF line tables in release builds so jemalloc
+# heap profiles symbolize exactly (function + file:line, including inlined
+# and private frames) instead of nearest-exported-symbol guesses.
+[profile.release]
+debug = 1
