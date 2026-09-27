@@ -53,18 +53,6 @@
     "esmDeclarations": 28121,
     "commonJsDeclarations": 28135
   },
-  "reviewBudgetChange": {
-    "scope": "#206 / #163 Part A review API, transport and middleware fixes only",
-    "approvedAt": "2026-09-27",
-    "previousBaseline": "baseline-metrics-p3-pre-review.json",
-    "previousCommit": "b8f3a12a45b89923d875c8b7269d52907a39885e",
-    "previousBaselineSha256": "95147dcfd0205cbf92a13ffdb23507aa68a2b2a65463e9267594be0719091bb9",
-    "approvedArchiveBaseline": 159591,
-    "approvedDeclarationBaselineNotUsed": 57550,
-    "firstFailedMeasurement": { "packageTarball": 159591, "packageTypes": 57550 },
-    "afterClarityMeasurement": { "packageTarball": 159912, "packageTypes": 57290 },
-    "reason": "The user approved one-time review-work archive/declaration baselines at the first measured overruns. The single clarity pass brought declarations within the original cap, so only the approved archive baseline 159591 is used, not the later measurement 159912. All other limits, coverage floors and the normal 2% policy remain unchanged. This is not a transferable allowance for later layers."
-  },
   "coverage": {
     "package": {
       "statements": 62.52,
@@ -80,7 +68,7 @@
     }
   },
   "sizes": {
-    "packageTarball": 159591,
+    "packageTarball": 155916,
     "packageEsm": 84754,
     "packageCjs": 91229,
     "packageTypes": 56256,

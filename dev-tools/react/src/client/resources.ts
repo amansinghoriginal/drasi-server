@@ -192,8 +192,8 @@ async function readJson(response: Response, details: DrasiErrorDetails): Promise
 }
 
 export async function readResponse(response: Response, details: DrasiErrorDetails): Promise<unknown> {
+  const errorDetails = { ...details, status: response.status };
   if (!response.ok) {
-    const errorDetails = { ...details, status: response.status };
     if (response.status === 401) throw new DrasiError('UNAUTHENTICATED', errorDetails);
     if (response.status === 403) throw new DrasiError('FORBIDDEN', errorDetails);
     if (response.status === 404) {
@@ -218,10 +218,10 @@ export async function readResponse(response: Response, details: DrasiErrorDetail
       errorDetails,
     );
   }
-  const body = await readJson(response, details);
+  const body = await readJson(response, errorDetails);
   if (!isRecord(body) || body.success !== true || !('data' in body) ||
       (body.error !== undefined && body.error !== null)) {
-    throw new DrasiError('INVALID_PAYLOAD', details);
+    throw new DrasiError('INVALID_PAYLOAD', errorDetails);
   }
   return body.data;
 }

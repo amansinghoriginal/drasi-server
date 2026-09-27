@@ -4,6 +4,7 @@
 // You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
 
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -162,4 +163,34 @@ test('counts nested Trading chunks and CSS without counting source maps as execu
     tradingCss: 9,
     tradingCssGzip: ['main', 'theme'].reduce((bytes, content) => bytes + gzipSync(content).length, 0),
   });
+});
+
+test('applies the approved P3 archive baseline only and preserves the complete prior record', async () => {
+  const originalBytes = await readFile(new URL('../fixtures/baseline-metrics-p3-pre-review.json', import.meta.url));
+  const historical = JSON.parse(originalBytes);
+  const current = JSON.parse(await readFile(new URL('../fixtures/baseline-metrics.json', import.meta.url), 'utf8'));
+  assert.equal(createHash('sha256').update(originalBytes).digest('hex'),
+    '95147dcfd0205cbf92a13ffdb23507aa68a2b2a65463e9267594be0719091bb9');
+  assert.equal(current.reviewBudgetChange.previousBaselineSha256,
+    createHash('sha256').update(originalBytes).digest('hex'));
+  assert.deepEqual(current.sizes, { ...historical.sizes, packageTarball: 159591 });
+  assert.equal(current.sizes.packageTypes, 56256);
+  assert.equal(current.reviewBudgetChange.approvedDeclarationBaselineNotUsed, 57550);
+  const { reviewBudgetChange: _receipt, ...withoutReceipt } = current;
+  assert.deepEqual({ ...withoutReceipt, sizes: historical.sizes }, historical);
+  assert.deepEqual(current.reviewBudgetChange.firstFailedMeasurement,
+    { packageTarball: 159591, packageTypes: 57550 });
+  assert.deepEqual(current.reviewBudgetChange.afterClarityMeasurement,
+    { packageTarball: 159912, packageTypes: 57290 });
+});
+
+test('keeps the same 2% rule on the approved archive and the original declaration baseline', async () => {
+  const current = JSON.parse(await readFile(new URL('../fixtures/baseline-metrics.json', import.meta.url), 'utf8'));
+  assertBaseline({ ...current, sizes: { ...current.sizes, packageTarball: 162782, packageTypes: 57381 } }, current);
+  assert.throws(() => assertBaseline({
+    ...current, sizes: { ...current.sizes, packageTarball: 162783 },
+  }, current), /packageTarball grew more than 2%/);
+  assert.throws(() => assertBaseline({
+    ...current, sizes: { ...current.sizes, packageTypes: 57382 },
+  }, current), /packageTypes grew more than 2%/);
 });

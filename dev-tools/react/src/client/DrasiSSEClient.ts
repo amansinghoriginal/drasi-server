@@ -43,6 +43,7 @@ export interface DrasiSSEClientOptions extends ReconnectOptions {
 
 interface PendingConnection {
   generation: number;
+  maxReconnectAttempts: number;
   resolve: () => void;
   reject: (error: unknown) => void;
   cleanupAbort: () => void;
@@ -117,13 +118,18 @@ export class DrasiSSEClient {
   /**
    * Connect to the Drasi reaction's SSE stream. Native EventSource retries are
    * disabled by closing a failed source before scheduling the library's own
-   * bounded exponential-backoff retry.
+   * bounded backoff. The per-call retry limit applies only before the first
+   * open; subsequent reconnects use the configured policy.
    */
   async connect(
     _queryIds: string[],
     sseEndpoint: string,
     signal?: AbortSignal,
+    maxInitialReconnectAttempts = this.maxReconnectAttempts,
   ): Promise<void> {
+    if (!Number.isSafeInteger(maxInitialReconnectAttempts) || maxInitialReconnectAttempts < 0) {
+      throw new DrasiError('INVALID_CONFIGURATION', this.errorDetails);
+    }
     this.stopConnection(abortError('SSE connection replaced'));
 
     this.manuallyDisconnected = false;
@@ -144,6 +150,7 @@ export class DrasiSSEClient {
 
       this.pendingConnection = {
         generation,
+        maxReconnectAttempts: maxInitialReconnectAttempts,
         resolve,
         reject,
         cleanupAbort: () => signal?.removeEventListener('abort', onAbort),
@@ -303,7 +310,8 @@ export class DrasiSSEClient {
     this.attemptController?.abort();
     this.attemptController = null;
     const connectionError = asDrasiError(error, this.errorDetails, 'STREAM_UNAVAILABLE');
-    if (!connectionError.retryable || this.reconnectAttempts >= this.maxReconnectAttempts) {
+    const maxAttempts = this.pendingConnection?.maxReconnectAttempts ?? this.maxReconnectAttempts;
+    if (!connectionError.retryable || this.reconnectAttempts >= maxAttempts) {
       this.clearReconnectTimer();
       this.manuallyDisconnected = true;
       this.updateConnectionStatus({

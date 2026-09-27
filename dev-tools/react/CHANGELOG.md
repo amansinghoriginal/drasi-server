@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- Serialize nonempty middleware records with the existing JSON field formatter
+  in the query code viewer, preserving nested values and the empty-list display.
+- Retain received HTTP status on response-body/envelope failures and on
+  post-header timeouts, including the injected P3 transport's outer deadline.
+- Add per-initialization `maxInitialReconnectAttempts` for bounded setup handoff,
+  without changing the post-open reconnect policy.
+- Preserve Trading create/start resource identity and received status, including
+  setup-deadline failures; explicit caller cancellation remains an abort.
 - Preserve explicit SSE endpoint path/query trailing slashes, including signed
   or opaque query values, instead of applying server-base trimming to them.
   Provider identity uses the same separation: equivalent server bases stay

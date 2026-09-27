@@ -239,6 +239,79 @@ describe('connect-only DrasiClient', () => {
     expect(client.getConnectionStatus().reconnecting).toBe(false);
   });
 
+  it('allows one initial attempt without changing reconnect policy after opening', async () => {
+    vi.useFakeTimers();
+    const { client, server, factory } = setup({ reconnect: undefined });
+    server.queryStatus = 'Starting';
+    const first = client.initialize({ maxInitialReconnectAttempts: 0 }).catch((error: unknown) => error);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(await first).toMatchObject({ code: 'RESOURCE_STARTING', retryable: true });
+    expect(server.fetch).toHaveBeenCalledOnce();
+    expect(factory.instances).toHaveLength(0);
+    expect(vi.getTimerCount()).toBe(0);
+
+    server.queryStatus = 'Running';
+    const retry = client.initialize({ maxInitialReconnectAttempts: 0 });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(factory.instances).toHaveLength(1);
+    factory.instances[0].open();
+    await retry;
+    factory.instances[0].fail();
+    await vi.advanceTimersByTimeAsync(999);
+    expect(factory.instances).toHaveLength(1);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(factory.instances).toHaveLength(2);
+    expect(client.getConnectionStatus().reconnecting).toBe(true);
+  });
+
+  it('terminates an initial unavailable stream after REST classification without resource writes', async () => {
+    vi.useFakeTimers();
+    const { client, server, factory } = setup({ reconnect: undefined });
+    const pending = client.initialize({ maxInitialReconnectAttempts: 0 }).catch((error: unknown) => error);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(factory.instances).toHaveLength(1);
+    server.reactionStatus = 'Stopped';
+    factory.instances[0].fail();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(await pending).toMatchObject({
+      code: 'RESOURCE_STOPPED', instanceId: refs.instanceId, resourceKind: 'reaction', resourceId: 'stream',
+    });
+    expect(factory.instances[0].closed).toBe(true);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('shares the first in-flight retry limit and resets it for a later initialization', async () => {
+    vi.useFakeTimers();
+    const { client, server, factory } = setup({ reconnect: undefined });
+    server.queryStatus = 'Starting';
+    const first = client.initialize({ maxInitialReconnectAttempts: 0 }).catch((error: unknown) => error);
+    const joined = client.initialize({ maxInitialReconnectAttempts: 9 }).catch((error: unknown) => error);
+    await vi.advanceTimersByTimeAsync(0);
+    const error = await first;
+    expect(await joined).toBe(error);
+    expect(error).toMatchObject({ code: 'RESOURCE_STARTING' });
+    expect(server.fetch).toHaveBeenCalledOnce();
+
+    const next = client.initialize({ maxInitialReconnectAttempts: 1 }).catch((error: unknown) => error);
+    await vi.advanceTimersByTimeAsync(999);
+    expect(server.fetch).toHaveBeenCalledTimes(2);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(await next).toMatchObject({ code: 'RESOURCE_STARTING' });
+    expect(server.fetch).toHaveBeenCalledTimes(3);
+    expect(factory.instances).toHaveLength(0);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it.each([-1, NaN, Infinity, 1.5, Number.MAX_SAFE_INTEGER + 1, 1e100])('rejects invalid initial retry limit %s', async limit => {
+    vi.useFakeTimers();
+    const { client, server, factory } = setup();
+    const pending = client.initialize({ maxInitialReconnectAttempts: limit }).catch((error: unknown) => error);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(server.fetch).not.toHaveBeenCalled();
+    expect(factory.instances).toHaveLength(0);
+    expect(await pending).toMatchObject({ code: 'INVALID_CONFIGURATION' });
+  });
+
   it('stops in-flight validation on disconnect and ignores stale success', async () => {
     const { client, server, factory } = setup();
     const pending = deferred<Response>();
@@ -287,6 +360,39 @@ describe('connect-only DrasiClient', () => {
       });
     },
   );
+
+  it.each([
+    ['invalid-json', 200, 'INVALID_PAYLOAD'],
+    ['invalid-envelope', 202, 'INVALID_PAYLOAD'],
+    ['body-read', 200, 'SERVER_UNAVAILABLE'],
+    ['body-timeout', 202, 'SERVER_UNAVAILABLE'],
+    ['before-headers', undefined, 'SERVER_UNAVAILABLE'],
+  ] as const)('preserves received status for %s without exposing response details', async (mode, status, code) => {
+    vi.useFakeTimers();
+    const { client, server } = setup({ requestTimeoutMs: 20 });
+    server.fetch.mockImplementation(async (_input, init) => {
+      if (mode === 'before-headers') return new Promise<Response>((_resolve, reject) => {
+        init?.signal?.addEventListener('abort', () => reject(init.signal?.reason), { once: true });
+      });
+      if (mode === 'invalid-json') return new Response('private invalid response', { status });
+      if (mode === 'invalid-envelope') return new Response('{"private":"server detail"}', { status });
+      return new Response(new ReadableStream<Uint8Array>({
+        start(controller) {
+          if (mode === 'body-read') controller.error(new TypeError('private network detail'));
+          else init?.signal?.addEventListener('abort', () => controller.error(init.signal?.reason), { once: true });
+        },
+      }), { status });
+    });
+    const pending = client.getQueryConfig('stocks').catch((error: unknown) => error);
+    await vi.advanceTimersByTimeAsync(20);
+    const error = await pending;
+    expect(error).toBeInstanceOf(DrasiError);
+    expect(error).toMatchObject({
+      code, status, instanceId: refs.instanceId, resourceKind: 'query', resourceId: 'stocks',
+    });
+    expect((error as DrasiError).message).not.toContain('private');
+    expect(server.fetch).toHaveBeenCalledOnce();
+  });
 });
 
 describe('snapshot/live lifecycle', () => {

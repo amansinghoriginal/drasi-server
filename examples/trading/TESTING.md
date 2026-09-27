@@ -371,6 +371,27 @@ P2's measured whole-package coverage is 77.09% statements / 78.80% lines /
 they are not a claim that #163's final transport/result-contract coverage targets
 are finished.
 
+### Approved P3 review-work archive baseline
+
+For #206's initialization/error contracts, middleware viewer repair and related
+documentation, the user approved a one-time baseline update at the first
+failed measurement: archive **159,591** and declarations **57,550** bytes.
+One clarity-preserving JSDoc pass then measured archive **159,912** and
+declarations **57,290**. Both earlier overruns remain failed-gate evidence.
+The declaration result fits its original **57,381.12** cap, so the declaration
+approval is **not used**: its baseline remains **56,256**.
+
+Only `sizes.packageTarball` advances from **155,916** to the approved
+**159,591**, not the later 159,912-byte measurement. The normal 2% rule gives
+an archive cap of **162,782.82** bytes. All other size limits, coverage floors,
+source/map inclusions, images and test assertions remain unchanged.
+`baseline-metrics-p3-pre-review.json` preserves the entire original record
+from `b8f3a12a45b89923d875c8b7269d52907a39885e`, SHA-256
+`95147dcfd0205cbf92a13ffdb23507aa68a2b2a65463e9267594be0719091bb9`.
+Policy tests bind that history, the single changed size field and both cap
+boundaries. This is scoped to P3 review work, not a reusable allowance for
+later P4-P7 baselines or the separate P5 allowance.
+
 ### Historical P3 transport/type contract cost
 
 This is the original schema-2 measurement before the main-runtime integration.

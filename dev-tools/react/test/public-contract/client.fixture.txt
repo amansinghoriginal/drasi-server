@@ -7,6 +7,7 @@ import {
   DrasiClient,
   DrasiError,
   type DrasiClientOptions,
+  type DrasiInitializeOptions,
   type ConnectionStatus,
   type DrasiErrorCode,
   type DrasiErrorDetails,
@@ -51,6 +52,17 @@ export const options: DrasiClientOptions = {
     deliver('temperatures', [42]);
   },
 };
+
+export const initialOptions: DrasiInitializeOptions = { maxInitialReconnectAttempts: 1 };
+export const defaultInitialOptions: DrasiInitializeOptions = {};
+// @ts-expect-error Initial retry limits are numeric, not provisioning modes.
+export const badInitialString: DrasiInitializeOptions = { maxInitialReconnectAttempts: 'manage' };
+// @ts-expect-error A boolean does not define an initial retry count.
+export const badInitialBoolean: DrasiInitializeOptions = { maxInitialReconnectAttempts: false };
+// @ts-expect-error Initialization options cannot change resource ownership.
+export const initialProvisioning: DrasiInitializeOptions = { provision: true };
+// @ts-expect-error Startup retry policy is per initialize call, not client configuration.
+export const misplacedInitialOptions: DrasiClientOptions = { ...options, maxInitialReconnectAttempts: 1 };
 
 export const headerObject: DrasiClientOptions = { ...options, headers: new Headers({ Accept: 'application/json' }) };
 export const headerPairs: DrasiClientOptions = { ...options, headers: [['X-Consumer', 'packed-contract']] };
@@ -153,6 +165,13 @@ export const rawError: DrasiErrorDetails = { ...details, responseBody: 'untruste
 export const badConnection: ConnectionStatus = { connected: false, error: 'offline' };
 
 export async function typedClientCallbacks(client: DrasiClient) {
+  await client.initialize();
+  await client.initialize(defaultInitialOptions);
+  await client.initialize(initialOptions);
+  // @ts-expect-error Initialization does not accept an untyped retry flag.
+  await client.initialize(false);
+  // @ts-expect-error Misspelled options must not silently select the normal budget.
+  await client.initialize({ initialReconnectAttempts: 1 });
   const untypedRows: ResultRow[] = await client.getQueryResults('temperatures');
   // @ts-expect-error Default REST values cannot be consumed as known numbers.
   const unsafeNumber: number = untypedRows[0].celsius;

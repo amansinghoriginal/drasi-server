@@ -137,9 +137,62 @@ describe('shared read-only transport/auth policy', () => {
       if (mode === 'body') server.fetch.mockImplementation(async () => new Response(new ReadableStream()));
       const request = client.initialize().catch((error: unknown) => error);
       await vi.advanceTimersByTimeAsync(25);
-      expect(await request).toMatchObject({ code: 'SERVER_UNAVAILABLE', resourceId: 'stocks', retryable: true });
+      expect(await request).toMatchObject({
+        code: 'SERVER_UNAVAILABLE', resourceId: 'stocks', retryable: true,
+        status: mode === 'body' ? 200 : undefined,
+      });
       expect(client.getConnectionStatus().reconnecting).toBe(false);
     }
+  });
+
+  it.each([
+    ['query', 200], ['query', 202], ['config', 200], ['config', 202],
+    ['results', 200], ['results', 202], ['reaction', 200], ['reaction', 202],
+  ] as const)('retains HTTP %s/%s when the outer deadline wins a body that ignores cancellation', async (endpoint, status) => {
+    vi.useFakeTimers();
+    const headers = vi.fn<DrasiHeadersProvider>(async () => ({ 'X-Consumer': 'deadline-fixture' }));
+    const { client, server } = setup({ headers, credentials: 'include', requestTimeoutMs: 25 });
+    const original = server.fetch.getMockImplementation()!;
+    let received = false;
+    server.fetch.mockImplementation(async (input, init) => {
+      if (endpoint === 'results' && !String(input).endsWith('/results')) return original(input, init);
+      received = true;
+      return new Response(new ReadableStream<Uint8Array>(), { status });
+    });
+    const pending = (endpoint === 'reaction' ? client.getReaction()
+      : endpoint === 'query' ? client.getQuery('stocks')
+        : endpoint === 'config' ? client.getQueryConfig('stocks')
+          : client.getQueryResults('stocks')).catch((error: unknown) => error);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(received).toBe(true);
+    await vi.advanceTimersByTimeAsync(25);
+    const error = await pending;
+    expect(error).toBeInstanceOf(DrasiError);
+    expect(error).toMatchObject({
+      code: 'SERVER_UNAVAILABLE', retryable: true, status, instanceId: refs.instanceId,
+      resourceKind: endpoint === 'reaction' ? 'reaction' : 'query',
+      resourceId: endpoint === 'reaction' ? 'stream' : 'stocks',
+    });
+    expect(headers).toHaveBeenCalledTimes(server.fetch.mock.calls.length);
+    for (const [, init] of server.fetch.mock.calls) {
+      expect(init).toMatchObject({ method: 'GET', credentials: 'include', redirect: 'manual' });
+      expect(new Headers(init?.headers).get('X-Consumer')).toBe('deadline-fixture');
+    }
+    expect(server.fetch.mock.calls[server.fetch.mock.calls.length - 1][1]?.signal?.aborted).toBe(true);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('preserves an explicit caller abort after headers instead of wrapping it as a body timeout', async () => {
+    vi.useFakeTimers();
+    const { client, server } = setup({ requestTimeoutMs: 25 });
+    server.fetch.mockImplementation(async () => new Response(new ReadableStream(), { status: 202 }));
+    const controller = new AbortController();
+    const reason = new DOMException('Caller cancelled after headers', 'AbortError');
+    const request = client.getQueryConfig('stocks', controller.signal).catch((error: unknown) => error);
+    await vi.advanceTimersByTimeAsync(0);
+    controller.abort(reason);
+    expect(await request).toBe(reason);
+    expect(vi.getTimerCount()).toBe(0);
   });
 
   it.each(['query', 'config', 'results', 'reaction'] as const)(

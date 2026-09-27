@@ -294,6 +294,146 @@ describe('app-owned setup using the built package', () => {
     await run();
     expect(fetcher.mock.calls.filter(([url]) => String(url).endsWith('/start'))).toHaveLength(1);
   });
+
+  describe.each([
+    ['query', 'create', 'watchlist-query'],
+    ['query', 'start', 'watchlist-query'],
+    ['reaction', 'create', 'sse-stream'],
+    ['reaction', 'start', 'sse-stream'],
+  ] as const)('%s %s error identity', (kind, operation, id) => {
+    it.each([
+      [401, 'UNAUTHENTICATED'],
+      [403, 'FORBIDDEN'],
+      [503, 'SERVER_UNAVAILABLE'],
+      ['malformed', 'INVALID_PAYLOAD'],
+      ['body-read', 'SERVER_UNAVAILABLE'],
+      ['timeout', 'SERVER_UNAVAILABLE'],
+      ['network', 'SERVER_UNAVAILABLE'],
+      ['transport-abort', 'SERVER_UNAVAILABLE'],
+    ] as const)('preserves the known resource through %s failure', async (mode, code) => {
+      vi.useFakeTimers();
+      const { run, backend, fetcher } = setup(true);
+      if (kind === 'query') {
+        if (operation === 'create') backend.queries.delete(id);
+        else backend.queryStatuses.set(id, 'Stopped');
+      } else if (operation === 'create') backend.reaction = null;
+      else backend.reactionStatus = 'Stopped';
+      const original = fetcher.getMockImplementation()!;
+      fetcher.mockImplementation(async (input, init) => {
+        if (init?.method !== 'POST') return original(input, init);
+        if (typeof mode === 'number') return json({ code: 'PRIVATE_SERVER_DETAIL' }, mode);
+        if (mode === 'network') throw new TypeError('private network detail');
+        if (mode === 'transport-abort') throw new DOMException('private transport cancellation', 'AbortError');
+        if (mode === 'malformed') return new Response('private invalid JSON', { status: 201 });
+        return new Response(new ReadableStream<Uint8Array>({
+          start(controller) {
+            if (mode === 'body-read') controller.error(new TypeError('private body failure'));
+            else init?.signal?.addEventListener('abort', () => controller.error(init.signal?.reason), { once: true });
+          },
+        }), { status: 201 });
+      });
+      const pending = run().catch((error: unknown) => error);
+      await vi.advanceTimersByTimeAsync(10000);
+      const error = await pending;
+      expect(error).toBeInstanceOf(DrasiError);
+      expect(error).toMatchObject({
+        code, instanceId: 'trading-server', resourceKind: kind, resourceId: id,
+        status: typeof mode === 'number' ? mode : ['network', 'transport-abort'].includes(mode) ? undefined : 201,
+        retryable: code === 'SERVER_UNAVAILABLE',
+      });
+      expect((error as DrasiError).message).not.toContain('private');
+      const writes = fetcher.mock.calls.filter(([, init]) => init?.method === 'POST');
+      expect(writes).toHaveLength(1);
+      expect(new URL(String(writes[0][0])).pathname).toBe(
+        `${base}/${kind === 'query' ? 'queries' : 'reactions'}${operation === 'start' ? `/${id}/start` : ''}`,
+      );
+      expect(vi.getTimerCount()).toBe(0);
+    });
+
+    it('preserves explicit caller cancellation without more mutations', async () => {
+      vi.useFakeTimers();
+      const { run, backend, fetcher } = setup(true);
+      if (kind === 'query') {
+        if (operation === 'create') backend.queries.delete(id);
+        else backend.queryStatuses.set(id, 'Stopped');
+      } else if (operation === 'create') backend.reaction = null;
+      else backend.reactionStatus = 'Stopped';
+      const original = fetcher.getMockImplementation()!;
+      let pendingSignal: AbortSignal | null | undefined;
+      fetcher.mockImplementation((input, init) => {
+        if (init?.method !== 'POST') return original(input, init);
+        pendingSignal = init.signal;
+        return new Promise((_resolve, reject) => {
+          init.signal?.addEventListener('abort', () => reject(init.signal?.reason), { once: true });
+        });
+      });
+      const controller = new AbortController();
+      const result = run(controller.signal).catch((error: unknown) => error);
+      await vi.advanceTimersByTimeAsync(0);
+      expect(pendingSignal).toBeDefined();
+      controller.abort();
+      expect(await result).toBe(controller.signal.reason);
+      expect(pendingSignal?.aborted).toBe(true);
+      await vi.advanceTimersByTimeAsync(60000);
+      expect(fetcher.mock.calls.filter(([, init]) => init?.method === 'POST')).toHaveLength(1);
+      expect(vi.getTimerCount()).toBe(0);
+    });
+  });
+
+  it.each(['query', 'reaction'] as const)(
+    'identifies the active %s when the shared setup deadline cancels a mutation body', async kind => {
+      vi.useFakeTimers();
+      const descriptor = Object.getOwnPropertyDescriptor(navigator, 'locks');
+      Object.defineProperty(navigator, 'locks', { configurable: true, value: {
+        request: async (_name: string, _options: unknown, start: () => Promise<void>) => {
+          await new Promise(resolve => setTimeout(resolve, 55000));
+          await start();
+        },
+      } });
+      try {
+        const { run, backend, fetcher } = setup(true);
+        const id = kind === 'query' ? 'watchlist-query' : 'sse-stream';
+        if (kind === 'query') backend.queries.delete(id);
+        else backend.reaction = null;
+        const original = fetcher.getMockImplementation()!;
+        fetcher.mockImplementation((input, init) => {
+          if (init?.method !== 'POST') return original(input, init);
+          return Promise.resolve(new Response(new ReadableStream<Uint8Array>({
+            start(controller) {
+              init.signal?.addEventListener('abort', () => controller.error(init.signal?.reason), { once: true });
+            },
+          }), { status: 201 }));
+        });
+        const pending = run().catch((error: unknown) => error);
+        await vi.advanceTimersByTimeAsync(60000);
+        expect(await pending).toMatchObject({
+          code: 'SERVER_UNAVAILABLE', instanceId: 'trading-server',
+          resourceKind: kind, resourceId: id, status: 201,
+        });
+        expect(fetcher.mock.calls.filter(([, init]) => init?.method === 'POST')).toHaveLength(1);
+        expect(vi.getTimerCount()).toBe(0);
+      } finally {
+        if (descriptor) Object.defineProperty(navigator, 'locks', descriptor);
+        else Reflect.deleteProperty(navigator, 'locks');
+      }
+    },
+  );
+
+  it('does not accept a malformed successful start response just because the resource became active', async () => {
+    const { run, backend, fetcher } = setup(true);
+    backend.queryStatuses.set('watchlist-query', 'Stopped');
+    const original = fetcher.getMockImplementation()!;
+    fetcher.mockImplementation((input, init) => {
+      if (String(input).endsWith('/start')) {
+        backend.queryStatuses.set('watchlist-query', 'Running');
+        return Promise.resolve(new Response('private malformed body'));
+      }
+      return original(input, init);
+    });
+    await expect(run()).rejects.toMatchObject({
+      code: 'INVALID_PAYLOAD', status: 200, resourceKind: 'query', resourceId: 'watchlist-query',
+    });
+  });
 });
 
 describe('Trading instance and provider lifecycle', () => {
@@ -321,6 +461,125 @@ describe('Trading instance and provider lifecycle', () => {
       <button onClick={state.retry}>Retry probe</button>
     </div>;
   }
+
+  it.each(['query', 'reaction'] as const)(
+    'hands a persistently Starting %s to bounded setup with default reconnect settings', async kind => {
+      vi.useFakeTimers();
+      const { backend, fetcher, writes } = setup(true);
+      if (kind === 'query') backend.queryStatuses.set('watchlist-query', 'Starting');
+      else backend.reactionStatus = 'Starting';
+      const factory = vi.fn();
+      const rendered = render(<TradingProvider fetch={fetcher} eventSourceFactory={factory}><Probe /></TradingProvider>);
+      try {
+        await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
+        expect(fetcher.mock.calls.filter(([url]) => String(url).includes('/reactions/')).length).toBeGreaterThan(0);
+        expect(screen.queryByRole('alert')).toBeNull();
+        await act(async () => { await vi.advanceTimersByTimeAsync(60000); });
+        expect(screen.queryByRole('alert')?.textContent).toContain('unavailable');
+        expect(screen.queryByRole('button', { name: 'Retry connection' })).not.toBeNull();
+        expect(screen.getByText('true:SERVER_UNAVAILABLE')).not.toBeNull();
+        expect(writes()).toEqual([]);
+        expect(factory).not.toHaveBeenCalled();
+        expect(vi.getTimerCount()).toBe(0);
+      } finally {
+        rendered.unmount();
+      }
+    },
+  );
+
+  it('cancels default initial handoff and setup waits on unmount', async () => {
+    vi.useFakeTimers();
+    const { backend, fetcher, writes } = setup(true);
+    backend.queryStatuses.set('watchlist-query', 'Starting');
+    const factory = vi.fn();
+    const rendered = render(<TradingProvider fetch={fetcher} eventSourceFactory={factory}><Probe /></TradingProvider>);
+    await act(async () => { await vi.advanceTimersByTimeAsync(500); });
+    const readCount = fetcher.mock.calls.length;
+    rendered.unmount();
+    await act(async () => { await vi.advanceTimersByTimeAsync(240000); });
+    expect(fetcher).toHaveBeenCalledTimes(readCount);
+    expect(writes()).toEqual([]);
+    expect(factory).not.toHaveBeenCalled();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it.each([true, false])('allows one pre-ready stream recovery (recovers=%s) without provisioning', async recovers => {
+    vi.useFakeTimers();
+    const { fetcher, writes } = setup(true);
+    const sources: EventSourceLike[] = [];
+    const factory = () => {
+      const source: EventSourceLike = { onopen: null, onmessage: null, onerror: null, addEventListener: vi.fn(), close: vi.fn() };
+      sources.push(source);
+      return source;
+    };
+    const rendered = render(<TradingProvider fetch={fetcher} eventSourceFactory={factory}><Probe /></TradingProvider>);
+    try {
+      await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+      expect(sources).toHaveLength(1);
+      await act(async () => {
+        sources[0].onerror?.(new Event('error'));
+        await vi.advanceTimersByTimeAsync(999);
+      });
+      expect(sources).toHaveLength(1);
+      expect(screen.queryByRole('alert')).toBeNull();
+      await act(async () => { await vi.advanceTimersByTimeAsync(1); });
+      expect(sources).toHaveLength(2);
+      await act(async () => {
+        if (recovers) sources[1].onopen?.(new Event('open'));
+        else sources[1].onerror?.(new Event('error'));
+        await vi.advanceTimersByTimeAsync(0);
+      });
+      if (recovers) {
+        expect(screen.getByText('Ready')).not.toBeNull();
+        expect(screen.queryByRole('alert')).toBeNull();
+      } else {
+        expect(screen.getByText('true:STREAM_UNAVAILABLE')).not.toBeNull();
+        expect(screen.getByRole('button', { name: 'Retry connection' })).not.toBeNull();
+      }
+      expect(writes()).toEqual([]);
+      expect(sources).toHaveLength(2);
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      rendered.unmount();
+    }
+  });
+
+  it('keeps all ten default reconnect attempts after ready without provisioning', async () => {
+    vi.useFakeTimers();
+    const { fetcher, writes } = setup(true);
+    const sources: EventSourceLike[] = [];
+    const factory = () => {
+      const source: EventSourceLike = { onopen: null, onmessage: null, onerror: null, addEventListener: vi.fn(), close: vi.fn() };
+      sources.push(source);
+      return source;
+    };
+    const rendered = render(<TradingProvider fetch={fetcher} eventSourceFactory={factory}><Probe /></TradingProvider>);
+    try {
+      await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+      expect(sources).toHaveLength(1);
+      await act(async () => { sources[0].onopen?.(new Event('open')); });
+      expect(screen.getByText('Ready')).not.toBeNull();
+      for (let retry = 0; retry < 10; retry += 1) {
+        await act(async () => {
+          sources[retry].onerror?.(new Event('error'));
+          await vi.advanceTimersByTimeAsync(Math.min(1000 * 2 ** retry, 30000));
+        });
+        expect(sources).toHaveLength(retry + 2);
+        expect(screen.queryByRole('alert')).toBeNull();
+      }
+      await act(async () => {
+        sources[10].onerror?.(new Event('error'));
+        await vi.advanceTimersByTimeAsync(0);
+      });
+      expect(screen.getByText('true:STREAM_UNAVAILABLE')).not.toBeNull();
+      expect(screen.getByRole('button', { name: 'Retry connection' })).not.toBeNull();
+      expect(writes()).toEqual([]);
+      expect(sources).toHaveLength(11);
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      rendered.unmount();
+    }
+  });
 
   it('shares the single real package connection under StrictMode, then cleans it up', async () => {
     const { fetcher, writes } = setup();
