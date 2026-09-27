@@ -5,7 +5,7 @@
 
 import { createLegacyResultAdapter, sse034ResultAdapter } from '../src';
 import type {
-  DrasiClientOptions, DrasiError, DrasiProviderProps, ReactionReference,
+  DrasiClient, DrasiClientOptions, DrasiError, DrasiInitializeOptions, DrasiProviderProps, ReactionReference,
   QueryDelta, QuerySnapshot, QuerySubscriptionState, ResultAdapter, ResultChange,
   RowKey, UseDrasiQueryOptions,
 } from '../src';
@@ -26,6 +26,10 @@ export const rowKey: RowKey = raw => {
   return raw.id;
 };
 export const rawOptions: UseDrasiQueryOptions = { getKey: rowKey, transform: raw => raw };
+export const initial: DrasiInitializeOptions = { maxInitialReconnectAttempts: 1 };
+export const initialize = (client: DrasiClient): Promise<void> => client.initialize(initial);
+// @ts-expect-error Initial retry limits are numeric, not mutation/provisioning modes.
+export const invalidInitial: DrasiInitializeOptions = { maxInitialReconnectAttempts: 'manage' };
 
 // @ts-expect-error Instance identity must be explicitly resolved by the consumer.
 export const missingInstance: DrasiClientOptions = { serverUrl: options.serverUrl, queryIds: ['readings'], reaction };

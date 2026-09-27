@@ -3,7 +3,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
 
-import { DrasiClient, DrasiError, type Component } from '@drasi/react/client';
+import { DrasiClient, DrasiError, type Component, type DrasiErrorDetails } from '@drasi/react/client';
 import { TRADING_QUERIES, TRADING_QUERY_IDS, TRADING_REACTION, type TradingQueryDefinition } from './config';
 
 const SETUP_TIMEOUT_MS = 60000;
@@ -20,8 +20,9 @@ export function canPrepareTrading(error: unknown, instanceId: string): error is 
 }
 
 async function request(
-  fetcher: typeof fetch, url: string, signal: AbortSignal, init: RequestInit = {}, instanceId?: string,
+  fetcher: typeof fetch, url: string, signal: AbortSignal, init: RequestInit = {}, resource: DrasiErrorDetails = {},
 ): Promise<{ status: number; data: unknown }> {
+  const details = { ...resource };
   const controller = new AbortController();
   const abort = () => controller.abort();
   const timer = setTimeout(abort, 10000);
@@ -29,7 +30,7 @@ async function request(
   try {
     signal.throwIfAborted();
     const response = await fetcher(url, { ...init, signal: controller.signal });
-    const details = { instanceId, status: response.status };
+    details.status = response.status;
     if (response.status === 409 && init.method === 'POST') return { status: 409, data: null };
     if (!response.ok) {
       throw new DrasiError(response.status === 401 ? 'UNAUTHENTICATED'
@@ -43,9 +44,12 @@ async function request(
     controller.signal.throwIfAborted();
     return { status: response.status, data: body.data };
   } catch (error) {
+    if (signal.aborted && signal.reason instanceof DrasiError) {
+      throw new DrasiError(signal.reason.code, details);
+    }
     signal.throwIfAborted();
     if (error instanceof DrasiError) throw error;
-    throw new DrasiError(error instanceof SyntaxError ? 'INVALID_PAYLOAD' : 'SERVER_UNAVAILABLE', { instanceId });
+    throw new DrasiError(error instanceof SyntaxError ? 'INVALID_PAYLOAD' : 'SERVER_UNAVAILABLE', details);
   } finally {
     clearTimeout(timer);
     signal.removeEventListener('abort', abort);
@@ -103,7 +107,9 @@ interface SetupOptions {
   fetch: typeof fetch;
 }
 
-async function prepare({ client, serverUrl, fetch: fetcher }: SetupOptions, signal: AbortSignal): Promise<void> {
+async function prepare(
+  { client, serverUrl, fetch: fetcher }: SetupOptions, signal: AbortSignal, active: DrasiErrorDetails,
+): Promise<void> {
   const instanceId = client.instanceId;
   const details = (kind: 'query' | 'reaction', id: string) => ({ instanceId, resourceKind: kind, resourceId: id });
   const url = (kind: 'query' | 'reaction', id?: string, start = false) =>
@@ -115,6 +121,7 @@ async function prepare({ client, serverUrl, fetch: fetcher }: SetupOptions, sign
     }
   };
   const readQuery = async (definition: TradingQueryDefinition) => {
+    Object.assign(active, details('query', definition.id));
     const component = await client.getQuery(definition.id, signal);
     if (queryContract(component.config) !== queryContract(definition)) {
       throw new DrasiError('INCOMPATIBLE_RESOURCE', details('query', definition.id));
@@ -123,6 +130,7 @@ async function prepare({ client, serverUrl, fetch: fetcher }: SetupOptions, sign
     return component;
   };
   const readReaction = async () => {
+    Object.assign(active, details('reaction', TRADING_REACTION.id));
     const component = await client.getReaction(signal);
     const expected = { ...TRADING_REACTION, queries: TRADING_QUERY_IDS };
     if (Object.entries(expected).some(([key, value]) => JSON.stringify(component.config[key]) !== JSON.stringify(value))) {
@@ -160,7 +168,7 @@ async function prepare({ client, serverUrl, fetch: fetcher }: SetupOptions, sign
       const result = await request(fetcher, url(kind), signal, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
-      }, instanceId);
+      }, details(kind, id));
       started = result.status !== 409; // autoStart was requested only on our successful create.
       component = await read(); // Also validates the winner of a concurrent create.
     }
@@ -168,11 +176,11 @@ async function prepare({ client, serverUrl, fetch: fetcher }: SetupOptions, sign
       component = await read(); // Another tab may already have started it.
       if (['Stopped', 'Added'].includes(component.status)) {
         try {
-          await request(fetcher, url(kind, id, true), signal, { method: 'POST' }, instanceId);
+          await request(fetcher, url(kind, id, true), signal, { method: 'POST' }, details(kind, id));
         } catch (error) {
           // The server can report a racing start as an operation error rather
           // than 409. Accept it only after a successful, compatible active read.
-          if (!(error instanceof DrasiError) || error.status === undefined ||
+          if (!(error instanceof DrasiError) || error.status === undefined || error.status < 400 ||
               error.status === 401 || error.status === 403) throw error;
           component = await read();
           if (!['Running', 'Starting', 'Reconfiguring'].includes(component.status)) throw error;
@@ -217,10 +225,11 @@ export function ensureTradingResources(
   let flight = scopes.get(key);
   if (!flight || flight.controller.signal.aborted) {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(new DrasiError('SERVER_UNAVAILABLE', {
+    const active: DrasiErrorDetails = {
       instanceId: options.client.instanceId,
-    })), SETUP_TIMEOUT_MS);
-    const run = () => prepare(options, controller.signal);
+    };
+    const timer = setTimeout(() => controller.abort(new DrasiError('SERVER_UNAVAILABLE', active)), SETUP_TIMEOUT_MS);
+    const run = () => prepare(options, controller.signal, active);
     const promise = (async () => {
       if (globalThis.navigator?.locks) {
         await navigator.locks.request(`trading-setup:${key}`, { signal: controller.signal }, run);

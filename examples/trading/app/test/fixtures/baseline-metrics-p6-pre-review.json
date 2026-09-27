@@ -147,20 +147,6 @@
     "esmDeclarations": 41244,
     "commonJsDeclarations": 41261
   },
-  "reviewBudgetChange": {
-    "scope": "#209 / #164 Part B published-runtime and inherited review propagation, archive and dual declarations only",
-    "approvedAt": "2026-09-27",
-    "previousBaseline": "baseline-metrics-p6-pre-review.json",
-    "previousCommit": "1a8d1f504f86dd469643c0c4f471beca2de0513b",
-    "previousBaselineSha256": "58fa504b7e24cdf40fa39e5e09573146aed4756f715d63e5cefaf38e9f01f45e",
-    "approvedArchiveBaseline": 208944,
-    "approvedDeclarationBaseline": 84985,
-    "firstFailedMeasurement": { "packageTarball": 208944, "packageTypes": 84985 },
-    "firstArtifactSha256": "f9e310996d069657b5c458a9c6e004571d669974f55abc12680ad4eb588ab5b9",
-    "previousCaps": { "packageTarball": 208936.8, "packageTypes": 84155.1 },
-    "previousOverages": { "packageTarball": 7.2, "packageTypes": 829.9 },
-    "reason": "The actual user approved only these two P6 baselines from the first preserved ordinary package measurement. The inherited initialization API adds 1066 declaration bytes over the prior P6 output; the package retains its complete published-runtime and review documentation, maps and notices. Every other size counter, coverage floor and the normal 2% rule are unchanged. Earlier P3/P4/P5 approvals remain scoped historical records, not transferred or compounded into P6; this approval does not apply to P7."
-  },
   "coverage": {
     "package": {
       "statements": 62.52,
@@ -176,10 +162,10 @@
     }
   },
   "sizes": {
-    "packageTarball": 208944,
+    "packageTarball": 204840,
     "packageEsm": 89246,
     "packageCjs": 98118,
-    "packageTypes": 84985,
+    "packageTypes": 82505,
     "packageCss": 8616,
     "tradingJs": 304459,
     "tradingJsGzip": 92744,
