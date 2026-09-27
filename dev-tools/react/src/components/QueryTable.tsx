@@ -225,7 +225,7 @@ function formatQueryConfig(config: QueryConfig): string {
   addField('enableBootstrap', config.enableBootstrap);
   addField('bootstrapBufferSize', config.bootstrapBufferSize);
   if (Array.isArray(config.middleware) && config.middleware.length) {
-    lines.push(`middleware: [${config.middleware.join(', ')}]`);
+    addField('middleware', config.middleware);
   }
   addField('priorityQueueCapacity', config.priorityQueueCapacity);
   addField('dispatchBufferCapacity', config.dispatchBufferCapacity);
