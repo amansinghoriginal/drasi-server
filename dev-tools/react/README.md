@@ -1,14 +1,12 @@
 # @drasi/react
 
-React building blocks for UIs driven by [Drasi](https://drasi.io) Continuous
-Queries: one shared SSE connection, query hooks and a sortable, animated,
-fullscreen-capable table. The package connects to **existing resources**.
-Provisioning, query definitions, transforms, business routing and deployment
-defaults belong to the application.
+React controls for [Drasi](https://drasi.io) Continuous Queries: one shared SSE
+connection, hooks and a sortable/animated/fullscreen table. Connects to
+**existing resources**; applications own provisioning, definitions, transforms,
+business routing and deployment defaults.
 
-**Private, unpublished staging package.** It remains in `dev-tools/react` in
-this repository. Trading uses a local `file:` dependency; no npm publication,
-repository transfer or separate framework-agnostic package is implied.
+**Private and unpublished** in `dev-tools/react`. Trading uses a local `file:`
+dependency; no repository transfer or separate client package is implied.
 
 ## Installation and entrypoints
 
@@ -19,10 +17,9 @@ npm --prefix dev-tools/react ci
 npm --prefix dev-tools/react run build
 ```
 
-Repository consumers such as Trading declare
-`"@drasi/react": "file:../../../dev-tools/react"`. A source-free test consumer
-can instead install the `.tgz` produced by `npm pack`. No source aliases,
-Tailwind source scanning or install-time rebuilding are needed to consume it.
+Trading declares `"@drasi/react": "file:../../../dev-tools/react"`. Source-free
+consumers install the `npm pack` tarball, without source aliases, Tailwind source
+scanning or install-time rebuilding.
 
 | Import | Contents and dependencies |
 | --- | --- |
@@ -32,15 +29,12 @@ Tailwind source scanning or install-time rebuilding are needed to consume it.
 | `@drasi/react` | Deliberate convenience re-exports of all three groups. This is **not** a React-free import. |
 | `@drasi/react/styles.css` | Explicit package-owned stylesheet, never imported by the JS modules. |
 
-All four JS entrypoints ship real ESM/CommonJS exports and conditional `.d.ts`
-and `.d.cts` declarations. Import these paths, not `src`, `dist` or hashed
-shared chunks. The framework-agnostic client is a module of this same package.
+All four entrypoints ship ESM/CommonJS and conditional `.d.ts`/`.d.cts`.
+Import public paths, not `src`, `dist` or hashed chunks.
 
-React and React DOM are **optional installation peers** so client-only
-consumers need not install them. They are required for the React/component/root
-entrypoints: install the tested **18.3.1** versions in your application.
-No React copy is bundled or hidden in another dependency. The exact peer range
-deliberately makes no React 19 or future-major claim.
+React/React DOM are **optional installation peers** for client-only use.
+React/component/root users need **18.3.1**. No React copy is bundled or hidden;
+the exact peer range makes no React 19/future-major claim.
 
 Import the component stylesheet once when using presentation:
 
@@ -137,14 +131,11 @@ The request is `GET .../queries/{id}?view=full` or
 | `ReactionConfig` / `SseReactionConfig` | ID, kind, query membership and flattened plugin JSON properties. Supported SSE reads also validate host, port, SSE path and heartbeat interval. |
 | `JsonValue` / `ResultRow` | Plugin-owned JSON configuration and object rows whose application-specific fields remain `unknown`. |
 
-These are **read DTOs, not creation DTOs**. No pass-through creation fields,
-ignored deployment options or implicit Cypher selection are offered.
-Storage backend JSON and other plugin-owned JSON are exposed for inspection,
-not interpreted/executed by this client. Unknown additive server fields are
-not advertised as writable options. Required fields, enums, integer ranges,
-nested shapes and snapshot object rows are checked at runtime from `unknown`.
-Malformed/incompatible bodies fail visibly with `INVALID_PAYLOAD`; missing
-reads throw rather than returning a success-shaped `null`.
+These are **read DTOs, not creation DTOs**: no ignored/pass-through deployment
+fields or implicit Cypher. Storage/plugin JSON is inspectable, not executed;
+unknown additive fields are not writable options. Runtime checks narrow
+`unknown` required fields, enums, integer ranges, nested shapes and snapshot
+rows. Malformed bodies raise `INVALID_PAYLOAD`; missing reads throw, not `null`.
 
 Server 0.2.3's `enableArchive` and `memoryBudgetMiB` settings belong to the
 server/instance configuration, not new fields in the unchanged v1 query read
@@ -157,15 +148,13 @@ identity and returns safely encoded, instance-scoped links. It never follows
 arbitrary response links, and refuses REST redirects into another path/origin.
 The UI helper returns `${serverUrl}/ui?instance={encodedInstanceId}`.
 
-The historical `test/fixtures/server-v1/contract.json` contains **unmodified actual response
-bodies** for a full query, full SSE reaction and snapshot, with backend
-revision/binary/lock/plugin provenance. They were captured by the real Trading
-harness, not inferred from synthetic fakes. Tests consume those records and
-separately mutate them to exercise malformed, unauthorized and cross-instance
-cases. The historical `test/fixtures/server-v1-0.2.3/contract.json` separately
-records the own rebuilt server 0.2.3 / SSE 0.3.6 / ABI 0.13 responses; the same public
-read tests consume both versions. New records are never substituted into the
-old provenance. See [verified compatibility](#verified-compatibility).
+Historical `test/fixtures/server-v1/contract.json` retains actual full-query,
+SSE-reaction and snapshot bodies with backend/revision/binary/lock/plugin
+provenance from Trading's real harness.
+`test/fixtures/server-v1-0.2.3/contract.json` separately records own-rebuilt
+0.2.3/SSE0.3.6/ABI0.13 responses. Public read tests consume both; separate
+mutations test malformed, unauthorized and cross-instance cases. New records
+never replace old provenance. See [verified compatibility](#verified-compatibility).
 
 ## Authentication and injected transports
 
@@ -246,22 +235,19 @@ authorizes provisioning.
 
 ## Ownership and reconfiguration
 
-`DrasiProvider` owns a client, shared stream, initialization, retries and
-cleanup. Equivalent inline reference arrays, reaction/reconnect objects and
-headers do **not** bounce the connection. Query IDs compare as a set (duplicates
-remain invalid), header names/values are canonicalized, and omitted policy
-fields equal the documented defaults.
+`DrasiProvider` owns client/stream initialization, retry and cleanup. Equivalent
+inline references, reaction/reconnect objects and headers do **not** reconnect.
+Query IDs compare as a set (duplicates invalid); headers are canonicalized and
+omitted policies equal their defaults.
 
-Equivalent server-base spellings (including an optional trailing slash, host
-case or the standard explicit port) retain the same client/connection. Endpoint
-path/query differences, including the slash examples above, remain material:
-changing one closes the old stream and initializes the replacement.
+Server-base trailing slash, host case and default port spellings are equivalent.
+Endpoint path/query differences remain material, including the slash examples
+above: they close the old stream and initialize its replacement.
 
-Material server, instance, reaction ID, endpoint, query-set, credential/header,
-timeout, retry-policy or reconciliation-limit changes replace the lifecycle. Old requests are aborted,
-the old stream closes, and late events/snapshots/definition reads cannot update
-the new scope. Rows/config from another scope are hidden while replacement
-work starts; last-good data is retained only within its own scope.
+Material server/instance/reaction/endpoint/query-set, credentials/headers,
+timeout/retry/reconciliation changes replace the lifecycle. Old requests abort,
+the stream closes and late events/reads cannot reach the new scope. Foreign
+rows/config are hidden; last-good data stays only within its own scope.
 
 **Callable options compare by identity:** `fetch`, `eventSourceFactory`,
 `resultAdapter` and a header-provider function. Memoize them when their
@@ -703,9 +689,9 @@ Claims are intentionally narrow, not open-ended minimum versions:
 | React / React DOM | **18.3.1**, including real providers, StrictMode, unmount, equivalent/material rerenders and SSR. React 19 is not yet claimed. |
 | Node / tooling | **22.20.0** pinned Linux gate; **24.19.0** native development gates. TypeScript **5.9.3** (package) / **5.9.2** (Trading), tsup **8.5.1**, Vite **5.4.19**, Vitest **3.2.7**, committed lockfiles. |
 | Browsers | Playwright **1.56.1** Chromium, Firefox and WebKit in the pinned Linux/amd64 image from [Trading TESTING.md](../../examples/trading/TESTING.md). This is not an all-browser/all-version claim. |
-| Server | Current development runtime: **0.2.3**, registry library **0.9.2**, index **0.6.3**, engine **0.5.9** from the user-approved temporary source `211d0f2a79aa2ad0f7cb841937f52013fe95ded6` (drasi-project/drasi-core#810), AST **0.3.5**, Cypher/GQL **0.3.6**. Only engine/AST/Cypher are path-selected; equal-version sibling SDKs are not consumed. |
-| Plugin / ABI | Current signed SSE **0.3.7**, host/plugin/FFI crates **0.11.2**, native ABI **0.14.0**, from official merged release `70ca432c0f12623ab9b371b2d515180ccc80c2dd`. All six immutable platform/digest/hash/signature locks are inherited from the approved parent. No prior ABI cache fallback or trust relaxation. |
-| Historical runtime evidence | Original server **0.2.1** / library **0.8.9** / SSE **0.3.4** / ABI **0.11.0**, and server **0.2.3** / library **0.9.1** / SSE **0.3.6** / ABI **0.13.0** records remain separately versioned. They are not current ABI 0.14 validation or a fallback for it. |
+| Server | Server **0.2.3** with published registry core/functions **0.5.10**, library **0.9.3**, index **0.6.4**, middleware **0.5.11**, AST **0.3.5**, Cypher/GQL **0.3.6**. Default builds have no path overrides, revision pin or sibling-source prerequisite; the shared policy verifies 17 exact published archive identities and effective source contents. |
+| Plugin / ABI | Signed SSE **0.3.8**, host/plugin/FFI SDK crates **0.11.3**, independently versioned native ABI **0.14.0**. The coherent release family and all six immutable platform/digest/hash/signature locks are inherited from the approved parent. The repaired Darwin SSE signature keeps its original release binary and manifest, with the same trusted publisher. No older/unsigned fallback. |
+| Historical runtime evidence | Earlier `211d`/`1284` source-pin executions, library **0.9.2** / SDK **0.11.2** / SSE **0.3.7**, and the older **0.2.1**/ABI **0.11.0** and **0.2.3**/ABI **0.13.0** records remain separately versioned. They are not proof of execution against the current released graph. |
 
 Protocol capabilities, not a guessed version string, determine acceptance.
 Missing full-view fields, unsupported language/status/shape, wrong resource
@@ -716,10 +702,18 @@ the [approved main-runtime integration](../../docs/main-runtime-integration.md).
 The client does not attest engine/plugin versions; a semantically wrong result
 with a valid shape cannot be detected by DTO validation. Operator setup and
 real-server provenance/gates supply the version evidence.
-`211d0f2a` is unreleased development source: three aggregate and two additive
-outbox paths, not stored-data repair. Registry library 0.9.2 still uses compact
-records and `append`, not the new trim methods or drasi-project/drasi-core#909's
-codec fix. No migration, dropping, broader recovery or publication is implied.
+Published core fixes numeric sign/equality, compound grouping/default keys,
+lazy state and terminal handling; library 0.9.3 supplies the named MessagePack
+writer. **Reconstruct all affected state together from authoritative history:**
+numeric grouping/default/current fingerprints (ordinary integers and nested
+list/object keys included), lazy min/max, indexes and output. Back up first and
+verify bootstrap/replay availability. Output-only clearing is not migration.
+Source-rank hash rebootstrap and the named writer do **not** repair malformed
+old positional records. Strict errors remain visible; this package provides no
+user-data deletion, automatic migration or broader recovery guarantee.
+
+`211d0f2a`/library 0.9.2 compact-writer proof stays historical. Registry builds
+neither select nor modify the protected sibling, nor claim engine-Git/cleanliness.
 
 Historical `test/fixtures/server-v1/sse-0.3.4.ndjson` copies all **20 raw lines**
 verbatim from Trading's `test/fixtures/recorded/a2b6480-core-0.5.8/server-sse.ndjson`.
@@ -741,7 +735,7 @@ Both recordings still exercise the adapter; 0.3.6 also tests default transport
 and query-ID routing: `ADD`/`DELETE` data, `UPDATE` before/after/data, lowercase
 aggregation before/after **without data**, and unsafe numeric signatures.
 Neither captures a shared cursor. These records and Part A's DTO fixture are
-unchanged, not relabeled as ABI 0.14 proof. Current SSE 0.3.7 needs its own live
+unchanged, not relabeled as released proof. Current SSE 0.3.8 needs its own live
 gate; native ABI compatibility alone does not establish wire semantics.
 
 ## P4 / #163 Part B migration
@@ -803,26 +797,22 @@ observed wrong results and pass on P4:
 | Official before/after update changes the key | Both old and new identities remain. | Only the new identity with value `2`. |
 | Snapshot value `2` overlaps an older pending delta value `1` | Replay rolls the result back to `1`, without refreshing. | Reject the ambiguous candidate and accept value `3` through a bounded REST refresh. |
 
-These tests use the real provider, hooks, client and transport pipeline with
-injected REST/EventSource endpoints, not mocks that bypass those product
-implementations. They prove these targeted regressions, not stronger handoff
-semantics; the undetectable delayed-event limit above still applies.
+These use real providers/hooks/client/transport with injected REST/EventSource,
+not product-bypassing mocks. They prove targeted regressions, not stronger
+handoffs; the undetectable delayed-event limit still applies.
 
 Vitest coverage includes all `src/**/*.{ts,tsx}` product code. It enforces
 **90% statements, lines and functions and 85% branches**, separately for
 `src/client/**` and `src/react/**`. These subtree floors do not replace the
 existing package/consumer gates or change artifact-size baselines.
 
-Trading continues to consume built local exports. Its unchanged query
-definitions, financial transforms, provisioning and tutorial snippets stay
-app-owned. [Trading TESTING.md](../../examples/trading/TESTING.md) documents
-the locked clean-tarball gate, all three browsers, five original exact PNG images,
-coverage/size budgets and authoritative real-server financial/CRUD/reconnect
-assertions. Synthetic tests are not proof that a real plugin emits a shape.
-Artifact accounting includes all entrypoints/shared chunks, both declaration
-formats and all shipped CSS; historical single-format measurements remain
-preserved separately. The 2% future-growth policy and coverage floors do not
-change with this accounting correction.
+Trading's unchanged queries, finance, provisioning and tutorial snippets remain
+app-owned, using built local exports. [Trading TESTING.md](../../examples/trading/TESTING.md)
+covers clean tarballs, three browsers, five original exact images, budgets and
+real-server financial/CRUD/reconnect assertions. Synthetic shapes do not prove
+plugin output. Metrics include every entry/shared chunk, both declaration
+formats and all CSS; original single-format history is preserved. The 2%
+future-growth rule and coverage floors are unchanged.
 
 Keep `"private": true`. Publishing, repository transfer, credentials/workflows,
 new examples/Storybook and the pure UI/composition/accessibility work in #164
