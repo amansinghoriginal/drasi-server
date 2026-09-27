@@ -37,6 +37,11 @@ export interface DrasiClientOptions {
     'maxReconnectAttempts' | 'initialReconnectDelayMs' | 'maxReconnectDelayMs' | 'connectionTimeoutMs'>;
 }
 
+export interface DrasiInitializeOptions {
+  /** Retries before the first open; defaults to the normal policy. Later reconnects are unchanged. */
+  maxInitialReconnectAttempts?: number;
+}
+
 /**
  * Read-only resource validation, snapshots and one multiplexed SSE connection.
  * It never creates, starts, stops, updates or deletes resources. Buffered deltas
@@ -111,6 +116,7 @@ export class DrasiClient {
         ? `${instancePath(this.baseUrl, this.instanceId, kind, id)}?view=full`
         : instancePath(this.baseUrl, this.instanceId, kind, id, 'results');
       const response = await this.fetcher(url, { method: 'GET', signal: controller.signal });
+      details.status = response.status;
       const data = await readResponse(response, details);
       controller.signal.throwIfAborted();
       return data;
@@ -160,12 +166,14 @@ export class DrasiClient {
     return this.initialized;
   }
 
-  async initialize(): Promise<void> {
+  async initialize(options: DrasiInitializeOptions = {}): Promise<void> {
     if (this.initialized && this.sseClient.isConnected()) return;
     if (this.initPromise) return this.initPromise;
     const controller = new AbortController();
     this.initController = controller;
-    const promise = this.sseClient.connect([...this.queryIds], this.reaction.endpoint, controller.signal);
+    const promise = this.sseClient.connect(
+      [...this.queryIds], this.reaction.endpoint, controller.signal, options.maxInitialReconnectAttempts,
+    );
     this.initPromise = promise;
     try {
       await promise;

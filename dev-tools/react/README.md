@@ -318,7 +318,7 @@ interface ColumnDef<T> {
 If you are not using React, or you want full control, the underlying classes are
 exported too:
 
-- **`DrasiClient`** — connect-only; exposes `initialize()`,
+- **`DrasiClient`** — connect-only; exposes `initialize(options?)`,
   `validateResources(signal?)`, `subscribe(queryId, cb, onError?)`,
   `getQueryResults(queryId, signal?)`, `getQueryConfig(queryId, signal?)`,
   `getQuery(queryId, signal?)`, `getReaction(signal?)`,
@@ -395,6 +395,18 @@ Applications needing setup should first attempt `client.initialize()`, catch
 only eligible typed errors, run their own bounded provisioner, then retry.
 Keep desired-definition checks, POST bodies and conflict policy outside the
 package. Do not use SSE errors as absence detection.
+
+Use `client.initialize({ maxInitialReconnectAttempts: 1 })` for a short initial
+retry budget (`DrasiInitializeOptions`; omitted uses the normal policy, zero
+means no initial retries). The limit must be a nonnegative safe integer.
+REST classification still runs. After the first
+stream opens, the configured reconnect policy applies unchanged. Concurrent
+initialization calls share the first call's options. Trading uses one retry
+for both its first connection and its single post-setup connection: a persistent
+Starting result is handed to setup after one backoff, while a transient first
+SSE failure can recover. Exhausted startup failures surface explicit Retry.
+Received HTTP status is retained for malformed bodies, body-read failures and
+timeouts after headers; no status is invented for pre-response failures.
 
 For this application-owned lifecycle, `DrasiClientProvider` is a controlled
 React context binding: pass `value={{ client, initialized, error, retry }}`.

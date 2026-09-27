@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Retain received HTTP status on response-body failures and timeouts.
+- Add per-initialization `maxInitialReconnectAttempts` for bounded setup handoff,
+  without changing the post-open reconnect policy.
+- Preserve Trading create/start resource identity and status, including setup
+  deadline failures; explicit caller cancellation remains an abort.
+
 ### Added
 - Explicit `instanceId`, `queryIds` and `ReactionReference` connect-only contract;
   all validation/snapshot/definition reads use the selected instance.

@@ -3,13 +3,17 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
 
-import type { DrasiClientOptions, DrasiError, DrasiProviderProps, ReactionReference } from '../src';
+import type { DrasiClient, DrasiClientOptions, DrasiError, DrasiInitializeOptions, DrasiProviderProps, ReactionReference } from '../src';
 
 const reaction: ReactionReference = { id: 'events', endpoint: 'https://events.example/changes' };
 const options: DrasiClientOptions = {
   serverUrl: 'https://drasi.example', instanceId: 'analytics', queryIds: ['readings'], reaction,
 };
 export const provider: DrasiProviderProps = { ...options, children: null };
+export const initial: DrasiInitializeOptions = { maxInitialReconnectAttempts: 1 };
+export const initialize = (client: DrasiClient): Promise<void> => client.initialize(initial);
+// @ts-expect-error Initial retry limits are numeric, not mutation/provisioning modes.
+export const invalidInitial: DrasiInitializeOptions = { maxInitialReconnectAttempts: 'manage' };
 
 // @ts-expect-error Instance identity must be explicitly resolved by the consumer.
 export const missingInstance: DrasiClientOptions = { serverUrl: options.serverUrl, queryIds: ['readings'], reaction };

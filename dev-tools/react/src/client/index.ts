@@ -18,7 +18,7 @@
  */
 
 export { DrasiClient } from './DrasiClient';
-export type { DrasiClientOptions } from './DrasiClient';
+export type { DrasiClientOptions, DrasiInitializeOptions } from './DrasiClient';
 export { DrasiError } from './errors';
 export type { DrasiErrorCode, DrasiErrorDetails, DrasiResourceKind } from './errors';
 export { DrasiSSEClient } from './DrasiSSEClient';
