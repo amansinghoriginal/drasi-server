@@ -84,7 +84,7 @@ Trading's normal tables remain **400px**; fullscreen retains the **32px**
 inset and `calc(100vw - 64px)` / `calc(100vh - 64px)` bounds. All eleven
 queries, raw identity/projection rules, financial calculations, default-sort
 discrepancy, snippets and server-UI links remain app-owned and unchanged.
-P6's [normal P5 merge](https://github.com/drasi-project/drasi-server/blob/agentofreality-react-independent-examples/examples/trading/TESTING.md#p6-newer-main-development-source-propagation)
+P6's [normal P5 merge](https://github.com/drasi-project/drasi-server/blob/agentofreality-react-independent-examples/examples/trading/TESTING.md#p6-published-runtime-and-review-propagation)
 retains original/ABI 0.13/quality ancestry and requires its own rebuilt runtime,
 never a predecessor binary. Bounded row tokens/phase, paired observations,
 complete-graph SSR, controls, Trading design and strict legacy contrast remain.
@@ -122,7 +122,7 @@ gates does not authorize merge, release or publication.
 
 ## P5 / #164 Part A migration
 
-P5's [normal P4 integration](https://github.com/drasi-project/drasi-server/blob/agentofreality-react-independent-examples/examples/trading/TESTING.md#p5-newer-main-development-source-propagation)
+P5's [normal P4 integration](https://github.com/drasi-project/drasi-server/blob/agentofreality-react-independent-examples/examples/trading/TESTING.md#p5-published-runtime-and-review-propagation)
 retains original/ABI 0.13 history, table/DCE fixes and P3/P4 auth, protocol,
 identity, recovery and consistency limits. No rebase or P6/P7 feature import.
 
@@ -137,6 +137,9 @@ identity, recovery and consistency limits. No rebase or P6/P7 feature import.
    definition reads, UI links or implicit fullscreen. Compose application
    controls via `headerControls` and own the inspector/overlay. Trading uses
    its local `TradingQueryTable`, `QueryInspector` and `CodeViewerDialog`.
+   Nonempty middleware records serialize as JSON flow values, retaining
+   kind/name/nested configuration; an empty list is omitted. This is app-owned
+   inspection, not a restored package tutorial API.
 4. Update sort callbacks to accept `SortConfig | null`. Use `sort` for
    controlled state, `defaultSort` for one-time uncontrolled initialization;
    explicit `null` clears to input order. `useTableSort` and `SortConfig` are

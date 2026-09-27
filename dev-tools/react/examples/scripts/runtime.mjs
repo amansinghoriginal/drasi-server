@@ -48,6 +48,10 @@ export async function startExample(env = process.env) {
   const sourceProvenance = JSON.parse(command('python3', [
     join(exampleRoot, 'scripts/verify-plugins.py'), source, '--source',
   ], source));
+  assert.equal(sourceProvenance.dependencyOrigin, 'published-registry',
+    'The example requires the reviewed published runtime, not historical source-pin evidence');
+  assert.equal(sourceProvenance.publishedArchivesVerified, true,
+    'Published runtime archives and their resolved source files must be verified before startup');
   const binaryVersion = command(binary, ['--version'], source);
   verifyRuntimeVersion(binaryVersion, {
     server: sourceProvenance.serverVersion,
@@ -139,7 +143,8 @@ export async function startExample(env = process.env) {
     command('python3', [join(exampleRoot, 'scripts/verify-plugins.py'), source, join(directory, 'loaded-plugins.json')], source);
     const provenance = {
       sourceRevision: sourceProvenance.serverRevision,
-      coreRevision: sourceProvenance.engineGit,
+      dependencyOrigin: sourceProvenance.dependencyOrigin,
+      publishedArchivesVerified: sourceProvenance.publishedArchivesVerified,
       cargoLockSha256: sourceProvenance.serverCargoLockSha256,
       manifestSha256: sourceProvenance.serverManifestSha256,
       binarySha256: createHash('sha256').update(await readFile(binary)).digest('hex'),

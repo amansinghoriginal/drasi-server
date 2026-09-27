@@ -50,7 +50,8 @@ the installed guides and runs the inherited browser/visual matrix plus the
 canonical server-free showcase. It does not replace actual backend validation.
 
 Follow the [repository example setup](https://github.com/drasi-project/drasi-server/blob/agentofreality-react-independent-examples/dev-tools/react/examples/README.md#run-the-real-example)
-to build this checkout's UI/server and prepare the approved source/plugins,
+to build this checkout's UI/server with released registry dependencies and
+install the approved plugins, without a sibling-source prerequisite,
 then run `npm --prefix dev-tools/react/examples run test:live`. The normal and
 source-free paths use the same example-owned startup. Trading's separate
 [real financial/CRUD gate](https://github.com/drasi-project/drasi-server/blob/agentofreality-react-independent-examples/examples/trading/TESTING.md)
@@ -68,7 +69,7 @@ staging push, verify the example/provenance URLs against that declared ref.
 
 ## Verified compatibility
 
-[P7 integration evidence](https://github.com/drasi-project/drasi-server/blob/agentofreality-react-independent-examples/examples/trading/TESTING.md#p7-current-development-source-integration)
+[P7 integration evidence](https://github.com/drasi-project/drasi-server/blob/agentofreality-react-independent-examples/examples/trading/TESTING.md#p7-published-runtime-and-review-propagation)
 records the normal P6 merge, retained original/quality ancestry and contracts,
 checks and full artifact accounting. Claims exclude untested browser/AT versions;
 historical P6/P7 passes are not current proof or human AT approval.
@@ -78,9 +79,9 @@ historical P6/P7 passes are not current proof or human AT approval.
 | React / React DOM | **18.3.1**, including real providers, StrictMode, unmount, equivalent/material rerenders and SSR. React 19 is not yet claimed. |
 | Node / tooling | **22.20.0** pinned Linux gate; **24.19.0** native development gates. TypeScript **5.9.3** (package) / **5.9.2** (Trading), tsup **8.5.1**, Vite **5.4.19**, Vitest **3.2.7**, committed lockfiles. |
 | Browsers | Playwright **1.56.1** Chromium, Firefox and WebKit in the pinned Linux/amd64 image from [Trading TESTING.md](https://github.com/drasi-project/drasi-server/blob/agentofreality-react-independent-examples/examples/trading/TESTING.md). This is not an all-browser/all-version claim. |
-| Server | Current development runtime: **0.2.3**, registry library **0.9.2**, index **0.6.3**, engine **0.5.9** from the user-approved temporary source `211d0f2a79aa2ad0f7cb841937f52013fe95ded6` (drasi-project/drasi-core#810), AST **0.3.5**, Cypher/GQL **0.3.6**. Only engine/AST/Cypher are path-selected; equal-version sibling SDKs are not consumed. |
-| Plugin / ABI | Current signed SSE **0.3.7**, host/plugin/FFI crates **0.11.2**, native ABI **0.14.0**, from official merged release `70ca432c0f12623ab9b371b2d515180ccc80c2dd`. All six immutable platform/digest/hash/signature locks are inherited from the approved parent. No prior ABI cache fallback or trust relaxation. |
-| Historical runtime evidence | Original server **0.2.1** / library **0.8.9** / SSE **0.3.4** / ABI **0.11.0**, and server **0.2.3** / library **0.9.1** / SSE **0.3.6** / ABI **0.13.0** records remain separately versioned. They are not current ABI 0.14 validation or a fallback for it. |
+| Server | Server **0.2.3** with published registry core/functions **0.5.10**, library **0.9.3**, SDK **0.11.3**, index **0.6.4**, middleware **0.5.11**, AST **0.3.5**, Cypher/GQL **0.3.6**. Default builds have no path/Git override, revision file or sibling prerequisite. Shared verification checks 17 exact archive identities and effective source files. |
+| Plugin / ABI | Signed SSE **0.3.8**, SDK crates **0.11.3**, independently versioned native ABI **0.14.0**. All six immutable platform locks select the coherent official release family. The repaired Darwin SSE signature retains its original release binary and digest under the same trusted publisher; no older/unsigned fallback. |
+| Historical runtime evidence | Earlier `211d`/`1284` source-pin executions, library **0.9.2** / SDK **0.11.2** / SSE **0.3.7**, and the older **0.2.1**/ABI **0.11.0** and **0.2.3**/ABI **0.13.0** records remain separately versioned. They are not current released-runtime proof. |
 
 Protocol capabilities, not a guessed version string, determine acceptance.
 Missing full-view fields, unsupported language/status/shape, wrong resource
@@ -91,10 +92,32 @@ the [approved main-runtime integration](https://github.com/drasi-project/drasi-s
 The client does not attest engine/plugin versions; a semantically wrong result
 with a valid shape cannot be detected by DTO validation. Operator setup and
 real-server provenance/gates supply the version evidence.
-`211d0f2a` is unreleased development source: three aggregate and two additive
-outbox paths, not stored-data repair. Registry library 0.9.2 still uses compact
-records and `append`, not the new trim methods or drasi-project/drasi-core#909's
-codec fix. No migration, dropping, broader recovery or publication is implied.
+
+The 14 updated archives identify release
+`22125bf1d66062533b832a166fe4a51079a23d6e`; the three unchanged parser archives
+identify `8f0ed49802ab0f2d62ce834aafe7fe7e5861ee76`. Evidence records each
+archive's official checksum, VCS metadata and resolved file contents, not an
+engine-Git or sibling-cleanliness claim. The published middleware archive's
+README/readme case collision is accepted only when the actual filesystem
+aliases those files and the retained bytes match Cargo's archive order.
+
+**Persistent-state upgrade:** reconstruct all affected grouping/default/current
+fingerprints, lazy min/max sets, indexes and outputs together from authoritative
+bootstrap or retained replay. This includes ordinary integer and nested numeric
+keys, not only floats. Back up state and verify source history first. Durable
+source WAL is always on, independently of query-index/plugin-state settings;
+its presence is not proof that every needed event is still replayable.
+Source-rank configuration-hash rebootstrap and library 0.9.3's named MessagePack
+writer do not repair malformed old positional records. Strict errors remain
+visible. Do not clear only output, hot-reuse old grouped state, or infer an
+automatic user-data migration from this release.
+
+The previous `211d0f2a`/library 0.9.2 compact-writer execution remains historical:
+that temporary source had three aggregate and two additive outbox paths, while
+the registry library used `append`, not the new trim methods or the separate
+drasi-project/drasi-core#909 codec change. It supplied no stored-data repair
+guarantee. Current registry builds neither select nor modify that protected
+source snapshot.
 
 Historical `test/fixtures/server-v1/sse-0.3.4.ndjson` copies all **20 raw lines**
 verbatim from Trading's `test/fixtures/recorded/a2b6480-core-0.5.8/server-sse.ndjson`.
@@ -116,7 +139,7 @@ Both recordings still exercise the adapter; 0.3.6 also tests default transport
 and query-ID routing: `ADD`/`DELETE` data, `UPDATE` before/after/data, lowercase
 aggregation before/after **without data**, and unsafe numeric signatures.
 Neither captures a shared cursor. These records and Part A's DTO fixture are
-unchanged, not relabeled as ABI 0.14 proof. Current SSE 0.3.7 needs its own live
+unchanged, not relabeled as released proof. Current SSE 0.3.8 needs its own live
 gate; native ABI compatibility alone does not establish wire semantics.
 
 ## Development and Trading verification

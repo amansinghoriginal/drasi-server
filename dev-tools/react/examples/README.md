@@ -61,20 +61,23 @@ the preview without substituting it for actual runtime or human AT evidence.
 ## Run the real example
 
 Use Node **22.20.0** or **24.19.0**, React/React DOM **18.3.1**, the repository's
-Rust toolchain, Python **3.11+** and access to GHCR/Sigstore. The current
-development setup selects server **0.2.3**, registry library **0.9.2** and
-host/plugin/FFI crates **0.11.2**. Only engine **0.5.9**, AST **0.3.5** and
-Cypher **0.3.6** use the user-approved temporary source
-`211d0f2a79aa2ad0f7cb841937f52013fe95ded6` from drasi-project/drasi-core#810.
-The sibling's equal-version SDKs are not consumed.
-Signed plugins from merged release `70ca432c0f12623ab9b371b2d515180ccc80c2dd`
-use SDK **0.11.2** and native ABI **0.14.0**, including SSE **0.3.7**,
-HTTP source **0.2.12** and scriptfile bootstrap **0.2.14**.
+Rust toolchain, Python **3.11+** and access to crates.io/GHCR/Sigstore. The
+released setup selects server **0.2.3**, registry core/functions **0.5.10**,
+library **0.9.3**, host/plugin/FFI **0.11.3**, index **0.6.4** and middleware
+**0.5.11**. AST **0.3.5** and Cypher/GQL **0.3.6** remain registry packages.
+No path/Git overrides, revision file or sibling-source preparation is needed.
+Setup validates the exact 17 released archives and effective files.
+Signed plugins from release `22125bf1d66062533b832a166fe4a51079a23d6e`
+use SDK **0.11.3** and native ABI **0.14.0**, including SSE **0.3.8**,
+HTTP source **0.2.13** and scriptfile bootstrap **0.2.15**. The Darwin SSE
+signature repair did not change its release binary or trusted publisher.
 See [the repository's approved runtime and immutable pin provenance](https://github.com/drasi-project/drasi-server/blob/agentofreality-react-independent-examples/docs/main-runtime-integration.md).
-Earlier ABI 0.11/0.13 evidence is historical, not a startup fallback.
-The temporary engine pin is not a released fix or a stored-data repair:
-registry library 0.9.2 does not consume drasi-project/drasi-core#909's codec
-change or the new outbox trim methods. No core merge/publication is implied.
+Earlier source-pin and ABI evidence is historical, not a startup fallback.
+The [persistent-state upgrade warning](../docs/testing.md#verified-compatibility)
+requires complete authoritative reconstruction of grouped/lazy/index/output
+state, including integer and nested numeric keys. The new writer and
+source-rank rebootstrap do not repair malformed old records. This disposable
+example does not migrate real user data or authorize core/package publication.
 Linux builds
 also need libjq/Oniguruma development libraries as documented there.
 No database, Trading API or Docker container is needed by this example.
@@ -87,7 +90,7 @@ command. That npm 10.9.3 directory-copy path invokes package `prepare` despite
 From the repository root:
 
 ```sh
-# Prepare only an absent sibling; reject a wrong or dirty foreign checkout.
+# Verify locked release identities; no sibling source is fetched or selected.
 bash scripts/prepare-build.sh
 python3 scripts/plugin_origin.py mode
 
@@ -140,8 +143,9 @@ leaving such an expression in the SSE port would correctly fail the client's
 strict read contract even if the plugin itself resolved its bind port.
 Before installation, startup rejects a stale server/SDK binary version against
 the checked-out manifest/lock and resolved SDK. It reuses the shared backend
-source verifier to record the exact revision, manifest/lock hashes, selected
-engine/SDK identities and approved plugin-lock hash; actual loaded binary
+source verifier to record the server revision, manifest/lock hashes, all 17
+published archive version/checksum/VCS/effective-file identities and approved
+plugin-lock hash, without claiming engine-Git cleanliness; actual loaded binary
 hashes/native ABI/signatures remain independently checked. The startup also validates the actual pre-created references with the public
 REST-only client before exposing the browser listener; it does not rewrite
 responses or loosen that contract. The bootstrap file is copied into the owned working directory

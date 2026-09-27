@@ -48,7 +48,7 @@ export function formatQueryConfig(config: QueryConfig): string {
   }
   addField('enableBootstrap', config.enableBootstrap);
   addField('bootstrapBufferSize', config.bootstrapBufferSize);
-  if (config.middleware.length) lines.push(`middleware: [${config.middleware.join(', ')}]`);
+  if (config.middleware.length) addField('middleware', config.middleware);
   addField('priorityQueueCapacity', config.priorityQueueCapacity);
   addField('dispatchBufferCapacity', config.dispatchBufferCapacity);
   addField('dispatchMode', config.dispatchMode);

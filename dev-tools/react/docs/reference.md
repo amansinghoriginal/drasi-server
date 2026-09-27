@@ -20,7 +20,7 @@ implementation or a headless dependency shortcut.
 | Entrypoint / group | Exported symbols |
 | --- | --- |
 | `/client` runtime | `DrasiClient`, `DrasiSSEClient`, `DrasiError`, `sse034ResultAdapter`, `createLegacyResultAdapter`, `accumulateResult` |
-| `/client` connection and transport types | `DrasiClientOptions`, `DrasiSSEClientOptions`, `ReactionReference`, `ReconnectOptions`, `ResultReconciliationOptions`, `ConnectionStatus`, `DrasiRequestContext`, `DrasiHeaders`, `DrasiHeadersProvider`, `EventSourceOptions`, `EventSourceFactory`, `EventSourceLike` |
+| `/client` connection and transport types | `DrasiClientOptions`, `DrasiInitializeOptions`, `DrasiSSEClientOptions`, `ReactionReference`, `ReconnectOptions`, `ResultReconciliationOptions`, `ConnectionStatus`, `DrasiRequestContext`, `DrasiHeaders`, `DrasiHeadersProvider`, `EventSourceOptions`, `EventSourceFactory`, `EventSourceLike` |
 | `/client` read and error types | `Component`, `ComponentLinks`, `ComponentStatus`, `QueryLanguage`, `QueryConfig`, `QuerySource`, `QueryJoin`, `QueryJoinKey`, `QueryMiddleware`, `ReactionConfig`, `SseReactionConfig`, `JsonValue`, `DrasiErrorCode`, `DrasiErrorDetails`, `DrasiResourceKind` |
 | `/client` result and subscription types | `ResultRow`, `RowKey`, `ResultChange`, `QuerySnapshot`, `QueryDelta`, `QueryResult`, `ResultAdapter`, `ResultAdapterContext`, `LegacyResultAdapterOptions`, `RouteUnidentified`, `QueryStatus`, `QueryErrorScope`, `QuerySubscription`, `QuerySubscriptionState` |
 | `/react` runtime | `DrasiProvider`, `DrasiClientProvider`, `useDrasiClient`, `useDrasiQuery`, `useDrasiConnectionStatus`, `useDrasiQueryDefinition`, `useDrasiServerUiUrl`, `useRowAnimation`, `useTableSort`, `useReducedMotion` |
@@ -53,7 +53,7 @@ wildcard bind hosts, empty/dot identifiers and duplicate query IDs are rejected.
 | `credentials?: RequestCredentials` | `same-origin`; native SSE cannot implement `omit`. |
 | `eventSourceFactory?: EventSourceFactory` | Native browser EventSource by default. |
 | `requestTimeoutMs?: number` | 10000 ms; finite and positive, **per REST request**, including auth/body. Composite reads can make multiple requests. |
-| `reconnect?: ReconnectOptions` | Defaults below; same count/backoff for streams and snapshots. |
+| `reconnect?: ReconnectOptions` | Defaults below; normal stream and snapshot retry policy. A direct `initialize(options)` call can separately bound its pending opening. |
 
 | `ReconnectOptions` field | Default / allowed value |
 | --- | --- |
@@ -68,6 +68,16 @@ open, not idle lifetime of an already-open stream. Permanent failures stop
 immediately; exhaustion retains the last typed error and stops timers/work.
 Concurrent resource validation drains its bounded batch before failure handoff
 so app recovery does not race an abort storm. Explicit cancellation aborts all.
+
+`DrasiInitializeOptions` belongs to `client.initialize(options?)`, not the
+provider/constructor options. Its only field is
+`maxInitialReconnectAttempts?: number`: a nonnegative safe integer counting
+retries after the first attempt. Omitted uses the configured reconnect limit;
+`0` allows no initialization retries. It applies only while initialization is
+pending. The first concurrent call's options win; a later initialization chooses
+fresh options. Reusing an already initialized, connected client does not change
+its policy. After the first open, normal reconnect behavior (default ten retries)
+resumes unchanged. See [lifecycle ownership](connection.md#ownership-and-reconfiguration).
 
 ### Normalized results and explicit wire adapters
 
@@ -91,6 +101,12 @@ The stream supplies configured reaction and instance metadata in the context.
 New malformed/unroutable unidentified failures retain those reaction details;
 identified query failures use query details instead. Existing `DrasiError`
 objects retain their identity rather than being rewrapped.
+
+A recognized valid query ID remains the error scope when another alias is
+malformed, forbidden or conflicts with it. Such a payload still fails
+`INVALID_PAYLOAD`; it does not clear healthy queries or restart their shared
+stream. This is error attribution, not permission for the strict adapter to
+accept `query_id`. Unidentified faults cannot be assigned to a guessed query.
 
 The default **`sse034ResultAdapter`** accepts the recorded **untemplated SSE**
 envelope `{ queryId, results, timestamp }`. Its name identifies the original
@@ -1251,7 +1267,7 @@ configuration without opening a stream. The public instance surface is:
 | Member | Return / behavior |
 | --- | --- |
 | `readonly instanceId: string` | The configured instance ID, not a discovered/default instance. |
-| `initialize()` | `Promise<void>`; validates references and resolves after the stream opens. Shares in-flight initialization and reuses an already initialized, connected client. It does not await each subscriber's snapshot. There is no signal parameter; `disconnect()` cancels pending initialization. |
+| `initialize(options?: DrasiInitializeOptions)` | `Promise<void>`; validates references and resolves after the stream opens. Shares in-flight initialization using the first call's options and reuses an already initialized, connected client. `maxInitialReconnectAttempts` bounds only pending opening retries; later calls select fresh options and post-open reconnect policy is unchanged. It does not await each subscriber's snapshot. There is no signal parameter; `disconnect()` cancels pending initialization. |
 | `validateResources(signal?: AbortSignal)` | `Promise<void>`; bounded concurrent query reads, followed by the configured reaction read. Requires usable running resources, SSE kind and membership of all configured query IDs. Does not open a stream or set initialized state. |
 | `getQuery(queryId: string, signal?: AbortSignal)` | `Promise<Component<QueryConfig>>`; full-view DTO including lifecycle status. An inspection read need not be a subscribed/configured query and does not require it to be running. |
 | `getReaction(signal?: AbortSignal)` | `Promise<Component<ReactionConfig>>`; the **configured** reaction's full-view DTO. No reaction ID argument; the read alone does not enforce running status/SSE membership. |
@@ -1365,7 +1381,7 @@ the owner must supply a trusted browser endpoint and enforce its routing policy.
 
 | Method | Return / behavior |
 | --- | --- |
-| `connect(queryIds: string[], endpoint: string, signal?: AbortSignal)` | `Promise<void>`; replaces pending/current connection work and resolves when open, or rejects after permanent failure/exhaustion/cancellation. The signal cancels the **pending opening**; use `disconnect()` for lifetime cleanup after it resolves. `queryIds` is not a membership or authorization check at this layer: delivery is keyed by actual subscriptions and normalized result IDs. |
+| `connect(queryIds: string[], endpoint: string, signal?: AbortSignal, maxInitialReconnectAttempts?: number)` | `Promise<void>`; replaces pending/current connection work and resolves when open, or rejects after permanent failure/exhaustion/cancellation. The fourth argument is a nonnegative safe integer, defaulting to the configured retry count; it bounds only retries before the first open. Subsequent reconnects use the normal policy. The signal cancels the **pending opening**; use `disconnect()` for lifetime cleanup after it resolves. `queryIds` is not a membership or authorization check at this layer: delivery is keyed by actual subscriptions and normalized result IDs. |
 | `subscribe(queryId: string, onResult: (result: QueryDelta) => void, onError?: (error: DrasiError) => void)` | `() => void`; attaches a delta-only subscriber and returns its plain cleanup function. No REST snapshot, accumulated rows, state callback or query-local refresh method. Provide `onError` for query-scoped protocol/callback failures. |
 | `getQueryError(queryId: string)` | `DrasiError \| null`; retained query-scoped fault, separate from shared status. A later valid batch for that query clears it; disconnect clears all faults. |
 | `getConnectionStatus()` | `ConnectionStatus`; a status copy. |
@@ -1393,6 +1409,14 @@ optional field on the error. `DrasiResourceKind` is
 Render `.message`; discriminate with `instanceof DrasiError` and `.code`.
 Safe messages do not include raw server details. Explicit cancellation is the
 original abort reason rather than a `DrasiError`.
+
+Received HTTP status survives successful-response JSON/envelope/body failures
+and timeouts after headers, including the outer deadline for injected fetches
+that ignore cancellation. A failure before headers does not invent a status.
+Trading's app-owned create/start/setup-deadline errors additionally preserve
+the active instance, resource kind and ID; explicit caller abort retains its
+original reason. A malformed successful start response cannot be swallowed
+as a racing success.
 
 | Code | Meaning / appropriate owner action |
 | --- | --- |

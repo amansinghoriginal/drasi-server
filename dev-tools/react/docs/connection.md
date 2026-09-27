@@ -191,8 +191,13 @@ subscription's `.retry()` refresh only that subscription's REST baseline.
 Automatic transient snapshot retries are also query-local and do not disconnect
 other queries. A query-local retry cannot repair a failed shared connection.
 A direct `DrasiClient` has immutable configuration: construct/disconnect a new
-client for material changes. `initialize()` shares in-flight work and reuses a
+client for material changes. `initialize(options?)` shares in-flight work and reuses a
 connected client. Its owner must dispose subscriptions and call `disconnect()`.
+
+The direct [initialization options](reference.md#connection-options) can limit
+pending retries with `maxInitialReconnectAttempts`, without changing reconnects
+after the first stream open. Concurrent callers share the first call's policy;
+later initialization can choose a fresh one. This is not a provider prop.
 
 `DrasiClientProvider` instead binds an **app-owned** lifecycle. The binding
 does not initialize/disconnect, retry, provision or open a second connection.
@@ -215,7 +220,16 @@ export function AppOwnedBinding({ value, children }: {
 
 Trading's `TradingProvider.tsx` attempts the same client, catches only eligible
 known-resource failures, runs its app-owned bounded `ensureTradingResources`,
-then retries once. Its serial explicit-Cypher creation bodies, conflicts,
+then initializes once more. Both initialization calls pass
+`maxInitialReconnectAttempts: 1`, preserving recovery from one initial SSE
+failure while allowing persistently Starting resources to reach app-owned
+setup after one backoff. The setup operation has its existing 60-second
+deadline; that is not a global wall-clock bound for initialization plus setup.
+Invalid/auth/network errors never authorize provisioning. Create/start errors
+and setup deadlines retain known resource identity and received HTTP status;
+caller cancellation and compatible 409/read handling remain distinct.
+Malformed 2xx start bodies are not successful races.
+Its serial explicit-Cypher creation bodies, conflicts,
 shared work, cancellation and Web Locks stay outside the package.
 
 ## Consumer and hosting responsibilities

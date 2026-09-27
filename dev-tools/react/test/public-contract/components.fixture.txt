@@ -21,7 +21,7 @@ import {
   type QueryTableErrorContext,
 } from '@drasi/react/components';
 import type {
-  DrasiClientOptions, ConnectionStatus, DrasiError, DrasiErrorCode, DrasiErrorDetails,
+  DrasiClientOptions, DrasiInitializeOptions, ConnectionStatus, DrasiError, DrasiErrorCode, DrasiErrorDetails,
   ReactionReference, QueryConfig, ReactionConfig, Component, ResultRow, QueryResult,
   ResultChange, QuerySnapshot, QueryDelta, ResultAdapter, ResultAdapterContext,
   LegacyResultAdapterOptions, ResultReconciliationOptions, RowKey, QuerySubscription,
@@ -41,6 +41,7 @@ type Assert<T extends true> = T;
 
 // Root compatibility must expose the very same contracts, not weaker aliases.
 export type RootOptions = Assert<Equal<Root.DrasiClientOptions, DrasiClientOptions>>;
+export type RootInitializeOptions = Assert<Equal<Root.DrasiInitializeOptions, DrasiInitializeOptions>>;
 export type RootStatus = Assert<Equal<Root.ConnectionStatus, ConnectionStatus>>;
 export type RootCode = Assert<Equal<Root.DrasiErrorCode, DrasiErrorCode>>;
 export type RootDetails = Assert<Equal<Root.DrasiErrorDetails, DrasiErrorDetails>>;

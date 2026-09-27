@@ -29,17 +29,18 @@ test('rendering rejects invalid ports, missing/repeated markers and unresolved c
 });
 
 test('startup checks the actual binary against the resolved server and host SDK, not a stale version label', () => {
-  const expected = { server: '0.2.3', sdk: '0.11.2' };
-  const current = 'drasi-server 0.2.3\nrustc: measured toolchain\nplugin-sdk: 0.11.2\n';
+  const expected = { server: '0.2.3', sdk: '0.11.3' };
+  const current = 'drasi-server 0.2.3\nrustc: measured toolchain\nplugin-sdk: 0.11.3\n';
   assert.doesNotThrow(() => verifyRuntimeVersion(current, expected));
   assert.doesNotThrow(() => verifyRuntimeVersion(current.replaceAll('\n', '\r\n'), expected));
   for (const output of [
     current.replace('drasi-server 0.2.3', 'drasi-server 0.2.1'),
-    current.replace('plugin-sdk: 0.11.2', 'plugin-sdk: 0.10.0'),
-    current.replace('plugin-sdk: 0.11.2', 'plugin-sdk: 0.11.0'),
-    current.replace('plugin-sdk: 0.11.2', 'plugin-sdk: 0.11.1'),
-    current.replace('plugin-sdk: 0.11.2', ''),
-    current + 'plugin-sdk: 0.11.2\n',
+    current.replace('plugin-sdk: 0.11.3', 'plugin-sdk: 0.10.0'),
+    current.replace('plugin-sdk: 0.11.3', 'plugin-sdk: 0.11.0'),
+    current.replace('plugin-sdk: 0.11.3', 'plugin-sdk: 0.11.1'),
+    current.replace('plugin-sdk: 0.11.3', 'plugin-sdk: 0.11.2'),
+    current.replace('plugin-sdk: 0.11.3', ''),
+    current + 'plugin-sdk: 0.11.3\n',
     '',
   ]) assert.throws(() => verifyRuntimeVersion(output, expected), /Native binary does not match/);
 });
