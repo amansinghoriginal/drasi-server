@@ -205,6 +205,66 @@ describe('Trading-owned table composition', () => {
 });
 
 describe('Trading tutorial presentation', () => {
+  it.each<{ name: string; middleware: QueryConfig['middleware'] }>([
+    {
+      name: 'one structured entry',
+      middleware: [{ kind: 'map', name: 'rename', config: { field: 'temperature' } }],
+    },
+    {
+      name: 'multiple entries with nested configuration and quoted values',
+      middleware: [
+        {
+          kind: 'map',
+          name: 'first "quoted"',
+          config: {
+            nested: { path: 'readings["temperature"]', values: [true, false, null, 3.5, 'a,b', 'line\nbreak', '<tag>'] },
+          },
+        },
+        { kind: 'filter', name: 'second', config: { threshold: 20, enabled: false } },
+      ],
+    },
+    { name: 'an empty middleware list', middleware: [] },
+  ])('shows $name accurately in the real query code viewer', async ({ middleware }) => {
+    const user = userEvent.setup();
+    const app = await renderTrading();
+    const before = app.backend.requests.length;
+    app.backend.queries.set('watchlist-query', {
+      id: 'watchlist-query', queryLanguage: 'Cypher', autoStart: true,
+      query: 'MATCH (n) RETURN n', sources: [], middleware,
+    });
+    expect(screen.queryByRole('dialog')).toBeNull();
+    await user.click(within(panel('Watchlist')).getByRole('button', { name: 'View code' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Watchlist' });
+    await waitFor(() => expect(dialog.querySelector('pre code')?.textContent).toContain('MATCH (n) RETURN n'));
+    const code = dialog.querySelector('pre code')?.textContent;
+    if (code == null) throw new Error('Expected rendered query definition');
+    expect(code).not.toContain('[object Object]');
+    const middlewareLine = code.split('\n').find(line => line.startsWith('middleware: '));
+    if (middleware.length) {
+      expect(middlewareLine).toBeDefined();
+      expect(JSON.parse(middlewareLine!.slice('middleware: '.length))).toEqual(middleware);
+      expect(dialog.querySelector('tag')).toBeNull();
+    } else {
+      expect(middlewareLine).toBeUndefined();
+      expect(code).toBe([
+        'id: watchlist-query', 'queryLanguage: Cypher', 'autoStart: true', '',
+        'query: |', '  MATCH (n) RETURN n',
+        'enableBootstrap: true', 'bootstrapBufferSize: 10000',
+      ].join('\n'));
+    }
+    expect(within(dialog).getByRole('tab', { name: 'Query Definition' }).getAttribute('aria-selected')).toBe('true');
+    await user.click(within(dialog).getByRole('button', { name: 'Copy' }));
+    expect(await navigator.clipboard.readText()).toBe(code);
+    expect(app.backend.requests.slice(before)).toEqual([{ method: 'GET', path: queryPath, body: undefined }]);
+    await user.click(within(dialog).getByRole('button', { name: 'Close' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(within(panel('Watchlist')).getByRole('row', { name: /^AAPL / })).not.toBeNull();
+    expect(app.sources).toHaveLength(1);
+    expect(app.sources[0].closed).toBe(false);
+    app.unmount();
+    expect(app.sources[0].closed).toBe(true);
+  });
+
   it('updates displayed/copied content during an open viewer instead of freezing Loading', async () => {
     const user = userEvent.setup();
     const props = { isOpen: true, onClose: vi.fn(), title: 'Example', reactCode: 'consumer v1', cypherQuery: 'Loading query definition...' };

@@ -27,7 +27,7 @@ function identity(payload: ResultRow, legacy: boolean, context: ResultAdapterCon
   if ((payload.queryId !== undefined && !isIdentifier(payload.queryId)) ||
       (payload.query_id !== undefined && (!legacy || !isIdentifier(payload.query_id))) ||
       (payload.queryId !== undefined && payload.query_id !== undefined && payload.queryId !== payload.query_id)) {
-    return invalid(context);
+    return invalid(detailsFor(isIdentifier(id) ? id : undefined, context));
   }
   return isIdentifier(id) ? id : undefined;
 }

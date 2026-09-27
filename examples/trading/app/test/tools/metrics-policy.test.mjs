@@ -156,7 +156,7 @@ test('retains the P4 feature budget and schema-2 history while counting both act
 
 test('retains P5 feature bytes separately from counting its already-shipped CommonJS declarations', async () => {
   const historical = JSON.parse(await readFile(new URL('../fixtures/baseline-metrics-p5-v2.json', import.meta.url), 'utf8'));
-  const current = JSON.parse(await readFile(new URL('../fixtures/baseline-metrics.json', import.meta.url), 'utf8'));
+  const current = await historicalP5Baseline();
   assert.equal(historical.schemaVersion, 2);
   assert.equal(current.previousP5Measurement, 'baseline-metrics-p5-v2.json');
   assert.equal(historical.sizes.packageTypes, 37834);
@@ -216,12 +216,12 @@ test('counts nested Trading chunks and CSS without counting source maps as execu
   });
 });
 
-async function p5Baseline() {
-  return JSON.parse(await readFile(new URL('../fixtures/baseline-metrics.json', import.meta.url), 'utf8'));
+async function historicalP5Baseline() {
+  return JSON.parse(await readFile(new URL('../fixtures/baseline-metrics-p5-pre-review.json', import.meta.url), 'utf8'));
 }
 
 test('uses the actual-user-approved P5 allowance exactly once: 75725 passes, 75726 fails', async () => {
-  const expected = await p5Baseline();
+  const expected = await historicalP5Baseline();
   const unchanged = structuredClone(expected);
   const observed = { coverage: structuredClone(expected.coverage), sizes: { ...expected.sizes, tradingJsGzip: 75725 } };
   assertBaseline(observed, expected);
@@ -233,7 +233,7 @@ test('uses the actual-user-approved P5 allowance exactly once: 75725 passes, 757
 });
 
 test('retains the original 2% boundary when the explicit P5 approval is absent', async () => {
-  const expected = await p5Baseline();
+  const expected = await historicalP5Baseline();
   delete expected.approvedP5TradingJsGzipAllowance;
   const observed = { coverage: expected.coverage, sizes: { ...expected.sizes, tradingJsGzip: 75615 } };
   assertBaseline(observed, expected);
@@ -242,7 +242,7 @@ test('retains the original 2% boundary when the explicit P5 approval is absent',
 });
 
 test('never applies the P5 gzip allowance to another artifact or to coverage', async () => {
-  const expected = await p5Baseline();
+  const expected = await historicalP5Baseline();
   for (const [metric, bytes] of Object.entries(expected.sizes)) {
     if (metric === 'tradingJsGzip') continue;
     const observed = {
@@ -274,9 +274,157 @@ test('rejects allowance reuse for a changed size baseline, another layer or an a
     },
   ];
   for (const mutate of mutations) {
-    const expected = await p5Baseline();
+    const expected = await historicalP5Baseline();
     mutate(expected);
     assert.throws(() => assertBaseline({ coverage: expected.coverage, sizes: expected.sizes }, expected),
       /applies only to its original recorded baseline/);
+  }
+});
+
+test('applies the approved P3 archive baseline only and preserves the complete prior record', async () => {
+  const originalBytes = await readFile(new URL('../fixtures/baseline-metrics-p3-pre-review.json', import.meta.url));
+  const historical = JSON.parse(originalBytes);
+  const current = JSON.parse(await readFile(new URL('../fixtures/baseline-metrics-p3-review.json', import.meta.url), 'utf8'));
+  assert.equal(createHash('sha256').update(originalBytes).digest('hex'),
+    '95147dcfd0205cbf92a13ffdb23507aa68a2b2a65463e9267594be0719091bb9');
+  assert.equal(current.reviewBudgetChange.previousBaselineSha256,
+    createHash('sha256').update(originalBytes).digest('hex'));
+  assert.deepEqual(current.sizes, { ...historical.sizes, packageTarball: 159591 });
+  assert.equal(current.sizes.packageTypes, 56256);
+  assert.equal(current.reviewBudgetChange.approvedDeclarationBaselineNotUsed, 57550);
+  const { reviewBudgetChange: _receipt, ...withoutReceipt } = current;
+  assert.deepEqual({ ...withoutReceipt, sizes: historical.sizes }, historical);
+  assert.deepEqual(current.reviewBudgetChange.firstFailedMeasurement,
+    { packageTarball: 159591, packageTypes: 57550 });
+  assert.deepEqual(current.reviewBudgetChange.afterClarityMeasurement,
+    { packageTarball: 159912, packageTypes: 57290 });
+});
+
+test('keeps the same 2% rule on the approved archive and the original declaration baseline', async () => {
+  const current = JSON.parse(await readFile(new URL('../fixtures/baseline-metrics-p3-review.json', import.meta.url), 'utf8'));
+  assertBaseline({ ...current, sizes: { ...current.sizes, packageTarball: 162782, packageTypes: 57381 } }, current);
+  assert.throws(() => assertBaseline({
+    ...current, sizes: { ...current.sizes, packageTarball: 162783 },
+  }, current), /packageTarball grew more than 2%/);
+  assert.throws(() => assertBaseline({
+    ...current, sizes: { ...current.sizes, packageTypes: 57382 },
+  }, current), /packageTypes grew more than 2%/);
+});
+
+test('does not transfer the P3 review allowance into the historical P4 review budget', async () => {
+  const current = JSON.parse(await readFile(new URL('../fixtures/baseline-metrics-p4-review.json', import.meta.url), 'utf8'));
+  const p3 = JSON.parse(await readFile(new URL('../fixtures/baseline-metrics-p3-review.json', import.meta.url), 'utf8'));
+  assert.match(current.reviewBudgetChange.scope, /^#207 \/ #163 Part B/);
+  assert.match(p3.reviewBudgetChange.scope, /^#206 \/ #163 Part A/);
+  assert.notEqual(current.reviewBudgetChange.approvedArchiveBaseline, p3.reviewBudgetChange.approvedArchiveBaseline);
+  assert.equal(current.artifactChange.part, 'B / P4');
+  assert.deepEqual(current.sizes, {
+    packageTarball: 192535, packageEsm: 98585, packageCjs: 106000, packageTypes: 71207,
+    packageCss: 10043, tradingJs: 250892, tradingJsGzip: 73795, tradingCss: 21034, tradingCssGzip: 5163,
+  });
+});
+
+test('limits the scoped P4 approval to two size fields and preserves the full original baseline', async () => {
+  const originalBytes = await readFile(new URL('../fixtures/baseline-metrics-p4-pre-review.json', import.meta.url));
+  const historical = JSON.parse(originalBytes);
+  const current = JSON.parse(await readFile(new URL('../fixtures/baseline-metrics-p4-review.json', import.meta.url), 'utf8'));
+  const expected = { packageTarball: 192535, packageTypes: 71207 };
+  assert.equal(createHash('sha256').update(originalBytes).digest('hex'),
+    '46d8db7eb3ab6af2b6fba1e951abc362696f666514e766a1e9115c0065874d5f');
+  assert.equal(current.reviewBudgetChange.previousBaselineSha256,
+    createHash('sha256').update(originalBytes).digest('hex'));
+  assert.deepEqual(current.sizes, { ...historical.sizes, ...expected });
+  assert.deepEqual(current.reviewBudgetChange.firstFailedMeasurement, expected);
+  assert.equal(current.reviewBudgetChange.approvedArchiveBaseline, expected.packageTarball);
+  assert.equal(current.reviewBudgetChange.approvedDeclarationBaseline, expected.packageTypes);
+  const { reviewBudgetChange: _receipt, ...withoutReceipt } = current;
+  assert.deepEqual({ ...withoutReceipt, sizes: historical.sizes }, historical);
+  assert.throws(() => assertBaseline({ ...historical, sizes: { ...historical.sizes, ...expected } }, historical),
+    /packageTarball grew more than 2%/);
+});
+
+test('keeps the normal 2% integer boundaries on the approved P4 archive and declarations', async () => {
+  const current = JSON.parse(await readFile(new URL('../fixtures/baseline-metrics-p4-review.json', import.meta.url), 'utf8'));
+  assertBaseline({ ...current, sizes: { ...current.sizes, packageTarball: 196385, packageTypes: 72631 } }, current);
+  assert.throws(() => assertBaseline({
+    ...current, sizes: { ...current.sizes, packageTarball: 196386 },
+  }, current), /packageTarball grew more than 2%/);
+  assert.throws(() => assertBaseline({
+    ...current, sizes: { ...current.sizes, packageTypes: 72632 },
+  }, current), /packageTypes grew more than 2%/);
+});
+
+test('does not transfer either earlier review approval into the active P5 budget', async () => {
+  const current = JSON.parse(await readFile(new URL('../fixtures/baseline-metrics.json', import.meta.url), 'utf8'));
+  assert.equal(current.artifactChange.part, 'A / P5');
+  assert.match(current.reviewBudgetChange.scope, /^#208 \/ #164 Part A/);
+  assert.equal(current.sizes.packageTarball, 175111);
+  assert.equal(current.sizes.packageTypes, 75685);
+  for (const name of ['p3', 'p4']) {
+    const historical = JSON.parse(await readFile(new URL(`../fixtures/baseline-metrics-${name}-review.json`, import.meta.url), 'utf8'));
+    assert.equal(historical.approvedP5TradingJsGzipAllowance, undefined);
+    assert.notEqual(historical.reviewBudgetChange.approvedArchiveBaseline, current.sizes.packageTarball);
+  }
+});
+
+test('preserves the complete original P5 record and advances only the approved archive baseline', async () => {
+  const originalBytes = await readFile(new URL('../fixtures/baseline-metrics-p5-pre-review.json', import.meta.url));
+  const historical = JSON.parse(originalBytes);
+  const current = JSON.parse(await readFile(new URL('../fixtures/baseline-metrics.json', import.meta.url), 'utf8'));
+  assert.equal(createHash('sha256').update(originalBytes).digest('hex'),
+    '5f87e41b72410779d0af2ef7564af95108ee1e0b90972d63b9425ebaa472102d');
+  assert.equal(current.reviewBudgetChange.previousBaselineSha256,
+    createHash('sha256').update(originalBytes).digest('hex'));
+  assert.deepEqual(current.sizes, { ...historical.sizes, packageTarball: 175111 });
+  assert.equal(current.reviewBudgetChange.approvedArchiveBaseline, 175111);
+  assert.deepEqual(current.reviewBudgetChange.firstFailedMeasurement, { packageTarball: 175111 });
+  assert.equal(current.reviewBudgetChange.firstArtifactSha256,
+    '1b82158387e6f197e489d7e4c22edcde838a0fc1df158812678d9880e8263794');
+  assert.equal(current.reviewBudgetChange.previousArchiveCap, 172846.14);
+  assert.equal(current.reviewBudgetChange.previousArchiveOverrun, 2264.86);
+  assert.equal(current.approvedP5TradingJsGzipAllowance, undefined);
+  const { reviewBudgetChange: _receipt, ...withoutReceipt } = current;
+  assert.deepEqual({
+    ...withoutReceipt, sizes: historical.sizes,
+    approvedP5TradingJsGzipAllowance: historical.approvedP5TradingJsGzipAllowance,
+  }, historical);
+  assert.throws(() => assertBaseline({ ...historical, sizes: current.sizes }, historical),
+    /packageTarball grew more than 2%/);
+});
+
+test('keeps exact P5 archive and unchanged declaration boundaries without compounding', async () => {
+  const current = JSON.parse(await readFile(new URL('../fixtures/baseline-metrics.json', import.meta.url), 'utf8'));
+  const original = structuredClone(current);
+  const observed = { ...current, sizes: { ...current.sizes, packageTarball: 178613, packageTypes: 77198 } };
+  assertBaseline(observed, current);
+  assertBaseline(observed, current);
+  assert.deepEqual(current, original);
+  assert.throws(() => assertBaseline({
+    ...current, sizes: { ...current.sizes, packageTarball: 178614 },
+  }, current), /packageTarball grew more than 2%/);
+  assert.throws(() => assertBaseline({
+    ...current, sizes: { ...current.sizes, packageTypes: 77199 },
+  }, current), /packageTypes grew more than 2%/);
+});
+
+test('keeps the unused historical gzip allowance on its old vector, not the new archive baseline', async () => {
+  const historical = await historicalP5Baseline();
+  const current = JSON.parse(await readFile(new URL('../fixtures/baseline-metrics.json', import.meta.url), 'utf8'));
+  assert.equal(historical.approvedP5TradingJsGzipAllowance.bytes, 110);
+  assert.equal(historical.approvedP5TradingJsGzipAllowance.baselineSizesSha256,
+    '5e8ad7efb5c8f9dc59ad0308844c5643bdaf2e5d81d7f5fd24fdefaee249ba15');
+  assertBaseline({ ...current, sizes: { ...current.sizes, tradingJsGzip: 75615 } }, current);
+  for (const size of [75616, 75725]) {
+    assert.throws(() => assertBaseline({
+      ...current, sizes: { ...current.sizes, tradingJsGzip: size },
+    }, current), /tradingJsGzip grew more than 2%/);
+  }
+  const reused = { ...current, approvedP5TradingJsGzipAllowance: historical.approvedP5TradingJsGzipAllowance };
+  assert.throws(() => assertBaseline(current, reused), /applies only to its original recorded baseline/);
+  for (const [metric, size] of Object.entries(current.sizes)) {
+    if (metric === 'packageTarball') continue;
+    assert.throws(() => assertBaseline({
+      ...current, sizes: { ...current.sizes, [metric]: Math.floor(size * 1.02) + 1 },
+    }, current), new RegExp(`${metric} grew more than 2%`));
   }
 });

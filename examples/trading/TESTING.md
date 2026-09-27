@@ -4,13 +4,14 @@ This is the P1 foundation for [#200](https://github.com/drasi-project/drasi-serv
 Its original behavior baseline is [#119](https://github.com/drasi-project/drasi-server/pull/119)
 at `a2b648062a4c55e036d68b6f26bf73b4e773bcf1`; its current predecessor is the
 separately approved [B1 prerequisite #204](https://github.com/drasi-project/drasi-server/pull/204)
-at `650ae978b2d23832c2370f172d4a530bc76e4e0f`. It protects the existing Trading
+at `e07cc709658617d741881a0568ab3a6b5e9ff846`. It protects the existing Trading
 application, not a second demo. P1 does not redesign its query, package API,
 CSS or components. The reviewed engine/security/source-backed setup changes
 come from B1, whose history and policies are retained.
 
-**Default source integration is now required, not a diagnostic overlay.**
-The gate uses the pinned compatible source described below; the original #119
+**Default builds now use verified published registry dependencies, without a
+sibling repository or source overlay.** The gate uses the released graph
+described below; the original #119
 failure recordings remain [historical defect evidence](#historical-119-reproduction),
 never new golden expectations. Readiness for another development layer requires
 the actual current-branch product gates. It is not a claim that all external
@@ -18,11 +19,11 @@ checks or the entire unused core workspace are green, nor merge authorization.
 
 P2 ([#162](https://github.com/drasi-project/drasi-server/issues/162)) originally
 built on P1 `a8dd2f68dab9fb7ccbd982dfb6a3f309e36f0059`. Its normal parent update
-now incorporates exact P1 `74bebe2e585946ac52fce9b37473790b7c377bea`, including
-the approved newer-main graph, temporary `211d0f2a` engine source and official
-ABI 0.14 plugins below. Original P2
-`3e9833ccb2a4c5fb00a4cf2a2bf1ab9e8c14ae97` and its prior normal-update
-`5a24356384a96e396e468e44af9b339fb9005d3b` ancestry are retained.
+now incorporates exact P1 `76661b0ed81633dde1dbfec862db0090c45a979c`, with
+the published registry runtime and coherent signed plugin family below.
+There is no mandatory sibling or temporary source selection. Original P2
+`3e9833ccb2a4c5fb00a4cf2a2bf1ab9e8c14ae97` and the prior normal-update
+`55ca37f1d8a93639d8ae0cdbdd410fc869f774eb` ancestry are retained.
 The package still
 connects to explicit existing references with GETs only; Trading owns automatic
 setup in `src/drasi/ensureTradingResources.ts` and lifecycle orchestration in
@@ -33,7 +34,9 @@ originally built on P2 `3e9833ccb2a4c5fb00a4cf2a2bf1ab9e8c14ae97`.
 Its current normal parent integration retains original P3
 `a0569c2ae7b17f51996f431cf2264c636a19f3d1`, the earlier integrations and
 endpoint-identity fix `5a198eb3d6b50ce61cdd306173698faa12e6682b`, and incorporates
-exact updated P2 `d784446d7e2ca369c2ae0a3e3c560455d54369a6`.
+exact released-runtime P2 `395d798212344b71cf1bef1422afbdaaaba16a45`.
+The prior P3 source integrations, including
+`887ff332df02b6d42a56a97a853a3522ec7e42db`, remain historical evidence.
 No P4-P7 product code is imported.
 It completes the public client/transport/type/entrypoint and material
 configuration contract. P3's historical passes do not imply acceptance of the
@@ -42,19 +45,21 @@ The Part B consumer changes and focused proof obligations are described below;
 the measured historical evidence remains unchanged.
 
 P4 normally integrates exact updated P3
-`887ff332df02b6d42a56a97a853a3522ec7e42db`, retaining original P4 ancestry and
+`b8f3a12a45b89923d875c8b7269d52907a39885e`, retaining original P4 ancestry and
 the commit-phase query-key correction at
 `2b9890b1adb056bdb419cf94fdd6a701cef53479`. The complete identity, adapter,
-reactive-projection and bounded-recovery contract stays intact. Current
-`211d0f2a` / registry library 0.9.2 / SDK 0.11.2 / ABI 0.14 evidence must be
-proved on this owning branch; earlier `1284e9f` / ABI 0.11 and 0.13 captures
-and measurements remain historical. No P5-P7 product code is imported.
+reactive-projection and bounded-recovery contract stays intact. Published
+core 0.5.10 / library 0.9.3 / SDK 0.11.3 / ABI 0.14 evidence must be proved
+on this owning branch. Earlier `211d0f2a`/`1284e9f` source-pin executions and
+ABI 0.11/0.13 captures remain historical. No P5-P7 code is imported.
 
-P5 normally integrates exact P4 `6bb523b65ed8ca6a090dcc92d4ff79eb7c12731d`
-above its completed table/SSR/alignment and DCE head
-`79748574285ab4f6cb1738f1c8a0b585bd8ab53c`. Its implementation, regressions,
-budgets and historical records remain intact; only the approved parent runtime,
-setup/provenance and current-versus-historical documentation are integrated.
+P5 normally integrates exact P4 `4cbdb10516d3969c49ddc56d370952913f7b0c4f`
+above `786b122491db25ea5b1756c9538e85b29e780723`, preserving its completed
+table/SSR/alignment/DCE corrections. The published runtime, reviewed
+initialization/HTTP-status/query-error contracts and setup provenance are
+inherited; the middleware viewer fix moves into the existing app-owned inspector.
+Only the explicitly approved P5 archive baseline changes; all other budgets
+and complete historical records remain intact.
 P6/P7 features are not downported, and no later human acceptance is implied.
 
 ## Behavior inventory, version 1
@@ -296,8 +301,9 @@ historical evidence, not a current-runtime blocker.
 #### Historical P5 ABI 0.13 parent integration and accounting
 
 This section records the earlier `1284e9f` / library 0.9.1 / ABI 0.13
-integration. Its runtime, counts and captured measurements are historical;
-the current `211d0f2a` / ABI 0.14 propagation below needs its own proof.
+integration. Its runtime, counts and captured measurements are historical.
+The later `211d0f2a` / ABI 0.14 propagation is also historical; the current
+published runtime requires its own proof.
 
 P5 normally merges exact updated P4
 `2ccf8624533193861e6518cb0c39785f561fa270` into original P5
@@ -371,10 +377,11 @@ visibility advisories, and they make no P6 human accessibility claim.
 Final committed-head own-source/packed live and CI evidence is recorded on
 the owning #208 and #164 Part A without rewriting later-layer evidence.
 
-#### P5 newer-main development-source propagation
+#### Historical P5 newer-main development-source propagation
 
-The current parent is `6bb523b65ed8ca6a090dcc92d4ff79eb7c12731d`, with exact
-source and registry requirements in [the runtime matrix](../../docs/main-runtime-integration.md).
+This September 22 integration used parent
+`6bb523b65ed8ca6a090dcc92d4ff79eb7c12731d`; its source selection is historical
+in [the runtime matrix](../../docs/main-runtime-integration.md).
 Only engine 0.5.9 / AST 0.3.5 / Cypher 0.3.6 use clean temporary source
 `211d0f2a79aa2ad0f7cb841937f52013fe95ded6`; library 0.9.2, SDK/host/FFI 0.11.2,
 index 0.6.3, functions 0.5.9, middleware 0.5.10 and GQL 0.3.6 remain registry
@@ -396,6 +403,40 @@ tarball ceiling remains 172846.14 bytes. `211d0f2a` is not a published fix,
 library-codec adoption, legacy-record repair or license to broaden recovery.
 Earlier core/backport records, audit warnings and human AT/contrast limits
 remain explicit.
+
+#### P5 published-runtime and review propagation
+
+The current parent `4cbdb10516d3969c49ddc56d370952913f7b0c4f` brings the
+published registry-only runtime described below, with no source-pin file,
+mandatory sibling or engine-Git cleanliness claim. The 17 exact archive
+identities/effective contents and five actual signed runtime plugins must be
+verified on this owning checkout. Its real embedded UI/default binary is built
+before binary tests and rechecked after relinks. All affected ordinary integer,
+nested numeric, grouping/default/current, lazy/index and output state requires
+authoritative reconstruction; the named codec and source-rank rebootstrap do
+not repair malformed old records. No user data is deleted by this propagation.
+
+The inherited review contracts bound only pending initialization attempts,
+preserve received HTTP status and known resource identities through body and
+deadline failures, and isolate identified malformed query events from healthy
+subscriptions. The P5 provider-free/thin-table boundary remains unchanged.
+The middleware fix instead uses `QueryInspector`'s existing JSON field writer.
+Its three real rendered cases move from the parent's obsolete table inspector
+to `tableComposition.test.tsx`: single, nested/quoted/boolean/null/markup/newline,
+and empty middleware. They verify exact copied values, read-only lazy lookup,
+close behavior and the preserved live subscription; no tutorial props return
+to the public table. The two nonempty cases reproduce `[object Object]` before
+the one-line correction.
+
+Both reviewed P3/P4 baselines and their pre-review records are historical
+fixtures, not active P5 allowances. The scoped P5 archive approval below changes
+only its archive counter. The 2% rule, other counters and coverage floors remain
+unchanged. The old unused 110-byte gzip approval stays with its original size
+vector; the active vector uses the original normal gzip cap. Prior
+`67c7a2f`/`786b122` full CI, own-runtime
+and failed local timing evidence remains historical, not new-head execution.
+Current proof retains all 35 browser cases and five original images without
+clock, readiness, timeout, query, financial or styling changes.
 
 #### P5 table quality corrections and approved gzip allowance
 
@@ -631,7 +672,7 @@ entrypoints and unused components.
 | Package (18 tests) | 62.52% | 64.93% | 47.47% | 64.84% |
 | Trading (22 tests) | 83.79% | 84.83% | 74.52% | 82.01% |
 
-The app runner also includes nine native-version setup guards. These are
+The app runner also includes ten native-version setup guards. These are
 additional checks, not new Trading behavior coverage or changed product floors.
 
 Schema version 2 remeasures the same source and unchanged test scenarios using
@@ -712,6 +753,76 @@ P2's measured whole-package coverage is 77.09% statements / 78.80% lines /
 they are not a claim that #163's final transport/result-contract coverage targets
 are finished.
 
+### Approved P3 review-work archive baseline
+
+For #206's initialization/error contracts, middleware viewer repair and related
+documentation, the user approved a one-time baseline update at the first
+failed measurement: archive **159,591** and declarations **57,550** bytes.
+One clarity-preserving JSDoc pass then measured archive **159,912** and
+declarations **57,290**. Both earlier overruns remain failed-gate evidence.
+The declaration result fits its original **57,381.12** cap, so the declaration
+approval is **not used**: its baseline remains **56,256**.
+
+Only `sizes.packageTarball` advances from **155,916** to the approved
+**159,591**, not the later 159,912-byte measurement. The normal 2% rule gives
+an archive cap of **162,782.82** bytes. All other size limits, coverage floors,
+source/map inclusions, images and test assertions remain unchanged.
+`baseline-metrics-p3-pre-review.json` preserves the entire original record
+from `b8f3a12a45b89923d875c8b7269d52907a39885e`, SHA-256
+`95147dcfd0205cbf92a13ffdb23507aa68a2b2a65463e9267594be0719091bb9`.
+Policy tests bind that history, the single changed size field and both cap
+boundaries. This is scoped to P3 review work, not a reusable allowance for
+later P4-P7 baselines or the separate P5 allowance.
+
+### Approved P4 merged-review baselines
+
+The user separately approved only P4's first measured archive **192,535** and
+combined declaration **71,207** baselines on September 27. Required inherited
+initialization/status/middleware contracts and the query-error-isolation fix
+caused this cost; no content, maps, declarations or tests were excluded.
+Those first measurements remain failures against the previous caps, not
+retroactive passes. They set the new baselines, not any later larger artifact.
+
+`baseline-metrics-p4-pre-review.json` preserves the full original P4 baseline
+from `d131b561e852bd6593925872f123cf21300df3bb`, SHA-256
+`46d8db7eb3ab6af2b6fba1e951abc362696f666514e766a1e9115c0065874d5f`.
+Only its archive and declaration size fields change in P4's reviewed record,
+alongside the approval receipt. All other sizes, coverage floors, historical
+records and the normal 2% rule stay unchanged. New caps are **196,385.70** and
+**72,631.14** bytes; tests accept integer 196385/72631 and reject 196386/72632.
+The exact P3 review and pre-review records remain separate; its allowance is
+not transferred or compounded into P4, nor is this approval transferable onward.
+P5 preserves that reviewed record byte-for-byte as
+`baseline-metrics-p4-review.json`, alongside `baseline-metrics-p3-review.json`
+and both pre-review fixtures. Their policy tests read those historical files;
+`baseline-metrics.json` keeps P5's separately approved scope, never these caps.
+
+### Approved P5 review-propagation archive baseline
+
+On September 27 the actual user approved only the first frozen ordinary P5
+archive measurement, **175111 bytes**, as its new archive baseline. It failed
+the previous **172846.14** cap by **2264.86** bytes; that failure is not erased.
+The artifact SHA-256 is
+`1b82158387e6f197e489d7e4c22edcde838a0fc1df158812678d9880e8263794`.
+The unchanged 2% rule gives **178613.22**: integer 178613 passes and 178614 fails.
+No later measurement becomes the baseline.
+
+The original declaration baseline remains **75685**, cap **77198.70**;
+the first candidate's **77195** passed without a declaration allowance.
+All other size counters and coverage floors remain unchanged. The first
+candidate included 56 files and 18 maps; no code, maps, declarations, docs,
+CSS or notices were excluded, and no compiler or archive ordering was changed.
+
+`baseline-metrics-p5-pre-review.json` preserves the complete original record
+from `786b122491db25ea5b1756c9538e85b29e780723`, SHA-256
+`5f87e41b72410779d0af2ef7564af95108ee1e0b90972d63b9425ebaa472102d`.
+Its historical 110-byte gzip approval remains unused and tested against the
+original full-vector fingerprint, including the 75725/75726 boundary. It is
+not rebound to the new archive vector: active gzip uses **74133 * 1.02 =
+75615.66**, accepting 75615 and rejecting 75616. Policy tests preserve the
+old history, archive-only change, declaration boundary and non-transfer rules
+across the P3/P4/P5 records.
+
 ### Historical P3 transport/type contract cost
 
 This is the original schema-2 measurement before the main-runtime integration.
@@ -756,33 +867,72 @@ provider test passes on P3. No predecessor/other worktree was modified.
 Positive/negative packed type cases, malformed captured DTO mutations and
 auth/cross-instance cases complement the inherited business assertions.
 
-### P2 current development-source update
+### P2 published-runtime update
 
-The normal merge of P1 `74bebe2e585946ac52fce9b37473790b7c377bea` retains
+The normal merge of P1 `76661b0ed81633dde1dbfec862db0090c45a979c` preserves
+P2's reference-only, GET-only client and app-owned bounded/shared provisioner.
+Package and Trading production TypeScript/CSS, query text, source/join/create
+order, row transforms, business actions, negative ownership tests, clock and
+readiness bounds, complete artifact budgets and all five original images are
+unchanged. The inherited guards now verify the 17 published package identities
+and effective archive contents, including the narrowly verified middleware
+documentation case collision; no sibling-clean or `engineGit` fields are
+invented for registry builds.
+
+This layer must run its own released-backend proof: build the real UI/default
+binary before Rust tests, verify the final used binary after test relinks,
+consume the package from a clean tarball, and require fresh setup, no-write
+existing-resource reload and the unchanged financial/CRUD/reconnect assertions.
+Current exact-head results and raw provenance are recorded on #205. Earlier
+`211d`/`1284` executions below remain history, not substitutes for this run.
+
+Two local full browser runs remain failed evidence: the first passed 25/26
+scenarios but exceeded the existing WebKit two-tab 5-second Connected deadline;
+one authorized identical confirmation passed 24/26, with the same deadline
+failure and a 454-pixel desktop difference confined to the moving ticker.
+The confirmation recorded exactly 11 ordered query creations and one reaction,
+without duplicate starts, but SSE opened after the first tab's deadline.
+Both tarballs and all built frontend assets match the prior passing artifact.
+This establishes neither a host cause nor a resolved intermittent failure.
+No clock, worker, deadline, query, screenshot or budget was changed. Both traces
+and image comparisons are retained; independent live/budget and fresh same-tree
+CI evidence must be reported separately, not as an all-local-green claim.
+
+The released numeric fixes require authoritative reconstruction of all affected
+grouping/default state, lazy min/max sets, indexes and output together, including
+ordinary integer and nested compound keys. The source-rank configuration-hash
+rebootstrap and named MessagePack writer are not repairs for malformed old
+positional records. This fresh-data test does not delete user state, clear only
+output rows or claim automatic migration; see the persistent-state boundary
+below.
+
+### Historical P2 temporary development-source update
+
+The earlier normal merge of P1 `74bebe2e585946ac52fce9b37473790b7c377bea` retained
 P2's reference-only, GET-only package and app-owned bounded/shared setup.
 Package and Trading runtime sources, query definitions, negative ownership
 cases, financial assertions, original images and complete artifact budgets
-are unchanged. The inherited source/runtime guards now require core 0.5.9,
+were unchanged. Its source/runtime guards required core 0.5.9,
 index 0.6.3 and registry SDK 0.11.2, rejecting the earlier versions.
 
-This selection needs its own rebuilt server/UI, signed ABI 0.14 plugins and
-actual browser/Trading evidence. The `211d0f2a` pin is temporary development
-source, not a released fix; the older `1284e9f` reports below are historical.
-Current commands, exact-head provenance and CI results are recorded on #205.
+That selection used its own rebuilt server/UI, signed ABI 0.14 plugins and
+actual browser/Trading evidence. The `211d0f2a` pin was temporary development
+source, not a released fix; it and the older `1284e9f` reports are historical.
+Those commands, exact-head provenance and CI results remain recorded on #205.
 Neither unchanged frontend bytes nor earlier lower-layer passes substitute
-for the current mixed graph's live proof.
+for the newly released graph's live proof.
 
-Own local verification passes 83 package tests, 66 Trading tests (57 existing
+That local verification passed 83 package tests, 66 Trading tests (57 existing
 plus nine runtime-version guards), nine artifact-policy tests and 54 tooling
-tests. The complete source-free Linux gate passes all 26 browser scenarios and
+tests. The complete source-free Linux gate passed all 26 browser scenarios and
 five original exact PNG files with unchanged artifact bytes and coverage.
-The own rebuilt UI/default server passes 809 locked Rust tests / 32 existing
-ignores; full plugin-dependent testing passes 840 / one ignored doctest, with
+The own rebuilt UI/default server passed 809 locked Rust tests / 32 existing
+ignores; full plugin-dependent testing passed 840 / one ignored doctest, with
 the separate legacy smoke still eight passes / 28 unconfigured skips.
-Formatting, strict Clippy and the selected host audit pass with 15 existing
+Formatting, strict Clippy and the selected host audit passed with 15 existing
 warnings, without suppressions or dependency changes beyond the inherited graph.
 
-The actual new-runtime Trading gate passes fresh setup, no-write reload and
+That actual runtime's Trading gate passed fresh setup, no-write reload and
 all CRUD/live/delete/reconnect assertions, including the unfiltered singleton
 2000/cost 1800/count 2 -> 2050 live/reload -> 2150 after reconnect. Its 17 raw
 SSE 0.3.7 events retain the observed `queryId`/`results`/`timestamp` envelope
@@ -815,24 +965,50 @@ Strict Clippy/fmt and the selected host audit passed, retaining its 15 existing
 warnings. Its CI, binary/lock hashes and independent packed live proof remain
 in #205's historical evidence, not relabeled as proof for the newer runtime.
 
-### P3 current development-source integration
+### P3 published-runtime integration
 
-The current P3 parent is
+P3 normally merges exact P2
+`395d798212344b71cf1bef1422afbdaaaba16a45` without changing its client/React
+runtime, public entrypoints, endpoint-identity regressions, app queries,
+transforms, fixture data, clocks, image baselines or artifact policy.
+Only the incoming released-runtime setup/provenance/version guards and coupled
+current-versus-historical documentation change. There are no default path
+patches, source pin, source-fetching prerequisite or companion-source selection.
+The protected older source snapshot remains untouched for other consumers.
+
+Because the protected frontend and browser inputs are byte-identical, prior
+local browser/image results remain unchanged-input history, not new execution.
+This propagation runs focused P3 and shared provenance tests, full unit/type/
+public-package/coverage/budget checks, and an independent packed actual live
+gate on its own rebuilt released server. It does not repeat local full
+fake-backend browser cycles. The first fresh same-tree CI must still run all
+26 browser scenarios, five original images and normal product checks; none
+are removed, skipped or relaxed. Actual final-head evidence belongs to #206.
+
+All affected numeric state, including ordinary integer and nested compound
+keys, requires authoritative reconstruction of grouping/default/current
+fingerprints, lazy min/max state, indexes and output together. Source-rank
+rehashing/rebootstrap and the named writer do not repair malformed old
+positional records. No user data is deleted or migrated by this propagation.
+
+### Historical P3 temporary development-source integration
+
+That P3 parent was
 `d784446d7e2ca369c2ae0a3e3c560455d54369a6`. Its source/setup/runtime selection
-is the same temporary `211d0f2a` / registry library 0.9.2 / SDK 0.11.2 /
-native ABI 0.14 graph described below. P3 retains all public entrypoints,
+was the temporary `211d0f2a` / registry library 0.9.2 / SDK 0.11.2 /
+native ABI 0.14 graph. P3 retained all public entrypoints,
 React-free client runtime/type graphs, guarded reads, auth/cancellation and
 provider ownership/identity behavior. In particular, explicit endpoint
 path/query slashes remain significant while equivalent server bases do not
 churn the connection; all 17 endpoint regressions are unchanged.
 
-Older core 0.5.8 / `1284e9f` / ABI 0.13 results and fixtures stay historical,
-not current-runtime evidence. This graph must build its own embedded UI/default
-server before binary-launching tests and run the same raw financial/CRUD/live
-gates. Run timing-sensitive packed browser/visual checks after heavy native
-work, not concurrently. The same 2% artifact cap, source coverage floors,
-clock/readiness assertions, all 11 query definitions and five original images
-remain authoritative. Current proof and final-head CI belong to #206.
+That source-pin runtime and the older core 0.5.8 / `1284e9f` / ABI 0.13 results
+and fixtures are historical, not published-runtime evidence. That graph built
+its own embedded UI/default server before binary-launching tests and ran its
+raw financial/CRUD/live gates. Its browser/visual checks ran after heavy native
+work. The unchanged 2% artifact cap, source coverage floors, clock/readiness
+assertions, all 11 query definitions and five original images remain
+authoritative; the historical proof and CI record are preserved on #206.
 
 ### Historical P3 ABI 0.13 main-runtime integration
 
@@ -1014,7 +1190,7 @@ Current-head CI and final provenance remain on #207; external workflow/model,
 configured-skip, embedded-plugin/legacy-workspace, npm/publication and human
 assistive-technology caveats are not converted into passed product claims.
 
-### P4 current development-source integration
+### Historical P4 development-source integration
 
 P4's normal merge of exact P3 `887ff332df02b6d42a56a97a853a3522ec7e42db`
 retains its original work and `2b9890b` concurrent-render correction. The
@@ -1024,7 +1200,7 @@ regressions, 17 endpoint tests and packed SSR console/browser-global traps
 remain authoritative. No new shared cache, protocol, UI, query, recovery
 promise or historical-data filtering is introduced.
 
-The current source/runtime/pin policy below applies: clean temporary `211d0f2a`
+That source/runtime/pin policy required clean temporary `211d0f2a`
 engine/parser source, registry SDK even when equal-version sibling SDKs exist,
 and the six official signed ABI 0.14 locks. Own embedded UI/default-server
 build precedes serial Rust tests; record the actual used binary hash after
@@ -1034,9 +1210,29 @@ proof against this own runtime, not a lower owner's binary or old ABI cache.
 
 P3/P4 historical fixtures, all artifact histories, coverage floors, complete
 declaration/asset accounting and the existing 2% budget stay intact. Current
-head/source/binary/live/CI results belong to #207. The temporary source is not
+head/source/binary/live/CI results belonged to #207. The temporary source was not
 a released fix, library-codec adoption, legacy-data repair, broader recovery
 guarantee, publication or completed human assistive-technology acceptance.
+
+### P4 published-runtime integration
+
+The normal merge of P3 `b8f3a12a45b89923d875c8b7269d52907a39885e`
+preserves every P4 product/test input, including four Suspense regressions,
+17 endpoint cases, commit-only raw-key publication and warning-free,
+browser-global-trapped SSR. Only the approved released-runtime paths and
+current-versus-historical documentation change. No local full fake-browser
+cycle is repeated for unchanged inputs: first fresh CI must run all 26
+scenarios, five original images and the released-runtime live gate.
+
+Local proof still requires the own fresh UI/default binary, serial locked
+Rust and native checks, complete packed public/types/README/SSR/coverage/budgets,
+and the source-free actual live scenario on that committed candidate. Verify
+the binary's own UI path and served HTML/assets after test relinking; retain
+its actual used hash. The shared provenance records 17 verified published
+archives and effective source contents, not a sibling-Git/cleanliness claim.
+No archived source checkout, borrowed binary, pin fallback, changed result
+semantics or user-data migration supplies that proof. All previous P3/P4
+histories and human acceptance limits remain distinct from current evidence.
 
 ## Mandatory real-server gate
 
@@ -1047,32 +1243,46 @@ Flask on a dedicated loopback port. The actual built Trading app creates its
 queries/reaction and consumes real REST/SSE data. No synthetic endpoints are
 enabled in this browser run.
 
-### Integrated source and shared setup
+### Published registry provenance and shared setup
 
-Prepare/verify the exact `.drasi-core-revision` **before** any locked Rust build:
-`211d0f2a79aa2ad0f7cb841937f52013fe95ded6`, the user-approved existing source
-from drasi-project/drasi-core#810. This is a **temporary development source
-pin**, not a released fix or permission to merge/publish it. The default
-manifest selects only sibling engine 0.5.9 / AST 0.3.5 / Cypher 0.3.6.
-Library 0.9.2, SDK/host/FFI 0.11.2, index 0.6.3, functions 0.5.9, middleware
-0.5.10 and GQL 0.3.6 remain registry-sourced with server 0.2.3. Equal-version
-SDKs in the sibling workspace are not selected or permission to build plugins
-there. The older `1284e9f` / core 0.5.8 / ABI 0.13 reports are historical.
-See
-[B1's full provenance and consumption boundary](../../docs/engine-prerequisite.md)
-and [the approved main-runtime matrix](../../docs/main-runtime-integration.md).
+The default has no `.drasi-core-revision`, `prepare-core.sh`, source patches
+or mandatory sibling fetch. Server 0.2.3 uses published core/functions 0.5.10,
+library 0.9.3, host/plugin/FFI SDK 0.11.3, index 0.6.4, middleware 0.5.11,
+noop/application bootstrap 0.2.15, application reaction 0.3.13, state store
+0.2.8 and WAL 0.2.10. AST 0.3.5 and Cypher/GQL 0.3.6 remain the published
+parser versions. An absent, unrelated or dirty sibling is not selected or
+modified. Deliberately selected matching local-SDK development remains a
+separate mode; it cannot pass this published-runtime gate.
 
-Relative to released core 0.5.9, the selected source includes three aggregate
-production paths and two additive merged-main outbox paths, not only a
-three-file overlay. Registry library 0.9.2 calls `append`, not the new trim
-methods. Engine-only selection does not consume drasi-project/drasi-core#909's
-library codec change: compact MessagePack remains selected. These tests use
-fresh owned state and make no old-record repair, record-dropping, output-only
-clearing, persistence migration or general recovery claim.
+`source_provenance.py` reuses `scripts/plugin_origin.py`'s central
+`REGISTRY_PACKAGES` policy for all 17 exact name/version/source/checksum
+identities. It checks the caller's server commit and lock, rejects partial,
+duplicate, old, local/Git or patched-default identities, and verifies each
+official `.crate` archive's SHA256 against that policy. Resolved package source
+contents are checked against the archive, not assumed to match from a version
+number. Provenance records archive URLs, hashes, `.cargo_vcs_info.json`,
+verified file counts and Rust source hashes. The released family identifies
+`22125bf1d66062533b832a166fe4a51079a23d6e`; the unchanged parser archives
+retain their actual older VCS identity
+`8f0ed49802ab0f2d62ce834aafe7fe7e5861ee76`. No sibling `engineGit` or
+`engineSourceVerifiedClean` claim is emitted for registry builds.
 
-`source_provenance.py` invokes the shared source verifier and resolved-SDK
-policy, checks the caller's commit/lock and exact engine/parser origins, and
-rejects a different caller plugin lock. Native installation reuses
+The official middleware archive includes distinct `README.md` and `readme.md`
+entries. On filesystems where those exact paths demonstrably alias the same
+file, Cargo retains the later entry. Verification records both archive hashes
+and checks the retained bytes; on case-sensitive filesystems it checks both
+files separately. Symlinks, hard-link ambiguity, changed Rust source and
+unrelated path aliases are not exemptions.
+
+The checksum-verified core archive contains the final drasi-project/drasi-core#810
+aggregate/numeric grouping, compound-key, precision/default/lazy-state and
+terminal corrections. Library 0.9.3 includes the named MessagePack writer.
+See [the reviewed release and persistent-state boundary](../../docs/main-runtime-integration.md);
+older `211d`/`1284`, ABI and raw snapshot reports remain historical and are not
+relabeled as released execution.
+
+The caller's plugin lock must still match the exact reviewed platform lock.
+Native installation reuses
 `scripts/install_plugins.py`, rather than a second installer. Actual loaded
 plugin status/hash/version/ABI metadata is validated by that same shared
 policy and retained in `loaded-plugins.json`. The native CLI's reported server
@@ -1083,13 +1293,15 @@ banner uses that verified binary version, not the historical image version.
 For a source-free packed Trading consumer, set `P1_SOURCE_ROOT` to the original
 server checkout. It supplies **backend build provenance and setup helpers
 only**; no package source alias or Tailwind scan is introduced. The frontend
-still consumes the tarball. CI prepares the pinned sibling before its build,
-passes that checkout explicitly, and triggers on Cargo, Make, core pin, shared
+still consumes the tarball. CI verifies the locked registry origin before its
+build, passes that checkout explicitly, and triggers on Cargo, Make, shared
 helper/pins, server/UI, package and Trading changes for dependent PR bases.
 
 Prerequisites: a POSIX host, Docker, the repository's Rust toolchain, Node 22,
-Python 3.13, and access to GHCR/Sigstore for signed plugin
-verification.
+Python 3.13, and access to crates.io archives and GHCR/Sigstore for source and
+signed-plugin verification. A cached archive is still hashed; a missing one
+is fetched only from its exact official crates.io URL, never from a source
+checkout. Missing or mismatched source evidence fails before services start.
 
 Linux checkout builds also require the system libjq and Oniguruma development
 libraries. The Ubuntu CI job installs `libjq-dev` and `libonig-dev` and exports
@@ -1121,14 +1333,18 @@ Rebuild the default server binary before Rust integration tests as well: some
 tests invoke `target/debug/drasi-server` directly. A build in another target
 directory or a handed-off B1 binary does not update that executable.
 
-The Linux amd64/arm64 and macOS arm64 lockfiles pin HTTP source **0.2.12**,
-PostgreSQL source **0.2.11**, SSE reaction **0.3.7**, and PostgreSQL/scriptfile
-bootstrappers **0.2.14** by immutable OCI manifest digest and binary SHA256.
+The Linux amd64/arm64 and macOS arm64 lockfiles pin HTTP source **0.2.13**,
+PostgreSQL source **0.2.12**, SSE reaction **0.3.8**, and PostgreSQL/scriptfile
+bootstrappers **0.2.15** by immutable OCI manifest digest and binary SHA256.
 They come from the merged official main release
-`70ca432c0f12623ab9b371b2d515180ccc80c2dd`, publication run
-[35281678998](https://github.com/drasi-project/drasi-core/actions/runs/35281678998).
-Both plugin and host SDK crates are **0.11.2**, with independently versioned
-C ABI **0.14.0**. ABI 0.11/0.13 caches are incompatible, not fallbacks.
+`22125bf1d66062533b832a166fe4a51079a23d6e`.
+Both plugin and host SDK crates are **0.11.3**, with independently versioned
+C ABI **0.14.0**. The Darwin SSE signature was repaired at
+`32fc9052f917666af14663b6c21f6e44d32778ae` under the unchanged trusted publisher;
+its binary source and signing revision are distinct. Older versions do not
+become valid just because they report ABI 0.14: the coherent released source
+family supplies required event sequence values. There is no old SSE/source
+or ABI 0.11/0.13 fallback.
 The shared installer runs the existing
 `plugin install --from-config --locked` with `verifyPlugins: true` and
 independently checks every downloaded binary hash. Missing tools, wrong
@@ -1163,7 +1379,7 @@ uses SIGINT. Completed `.test-runtime/live-*` directories intentionally retain
 diagnostics; remove a specific finished directory when no longer needed.
 
 Failure artifacts include service/install logs, runtime/lock/binary provenance,
-`source-provenance.json` with engine Git revision and resolved dependency sources,
+`source-provenance.json` with verified registry archive/VCS/content identities,
 `loaded-plugins.json` with actual ABI/hash/status,
 raw `server-rest.json`, unmodified SSE `data` strings in `server-sse.ndjson`,
 the application's mutation transcript and Playwright traces/screenshots/video.
@@ -1181,7 +1397,7 @@ Historical SSE 0.3.6 observations include `message` events with
 `queryId`/`results`/`timestamp`, `ADD`, `DELETE`, `UPDATE` and lowercase
 `aggregation` results. Aggregation carries `before`/`after` without `data`;
 update also carries `data`. ABI compatibility alone does not establish wire
-compatibility; current SSE 0.3.7 must pass the actual gate independently.
+compatibility; current SSE 0.3.8 must pass the actual gate independently.
 Retain each run's raw observations separately; do not normalize them into
 synthetic fixtures or infer guarantees for unexercised protocol paths.
 
@@ -1272,19 +1488,35 @@ expected results. They are never substituted for live responses.
 
 This historical defect is tracked by the existing
 [drasi-project/drasi-core#680](https://github.com/drasi-project/drasi-core/issues/680).
-The earlier compatible prerequisite used
-[drasi-project/drasi-core#934](https://github.com/drasi-project/drasi-core/pull/934);
-its reports remain historical. The current #204 development prerequisite uses
-the exact `211d0f2a` source from drasi-project/drasi-core#810 with the newer
-registry graph. No released fix or data migration is claimed. The current gate must prove the
+The earlier compatible and temporary prerequisites used
+[drasi-project/drasi-core#934](https://github.com/drasi-project/drasi-core/pull/934)
+and `211d0f2a` from drasi-project/drasi-core#810; their reports remain historical.
+The current #204 prerequisite selects the checksum-verified published release.
+The current gate must independently prove the
 correct singleton 2000 -> live/reload 2050 -> offline/reconnect 2150 result on
 this branch's own rebuilt server; earlier handed-off binary results are not a
 substitute.
 
+### Persistent-state upgrade is not automatic repair
+
+This test uses only fresh owned data. Upgrading existing affected numeric
+groups requires complete reconstruction from authoritative bootstrap or
+retained replay, including ordinary integer keys and numbers nested in lists
+or objects. Grouping/default/current state, lazy min/max sets, query indexes
+and outputs must be reconstructed together. Back up state and verify source
+history first; clearing output alone or retaining old lazy/index state is not
+a migration.
+
+Source ranks now participate in the query configuration hash, which causes a
+one-time old-hash mismatch and rebootstrap. That mechanism and the named
+MessagePack writer do not repair malformed old positional records. Strict
+errors remain visible. No user-data deletion, automatic repair or expanded
+recovery guarantee is part of this P1 change.
+
 ### Product gates versus retained caveats
 
 Current-head evidence is recorded on #200/#201, including the normal merge
-predecessor, server/core/manifest/lock/binary/plugin provenance, actual live
+predecessor, server/archive/manifest/lock/binary/plugin provenance, actual live
 results and cleanup. `make test-all` retains the original smoke script: its
 8 passes / 28 configuration-dependent skips are reported separately, not
 presented as coverage of every plugin. No new skips or expected failures are

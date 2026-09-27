@@ -10,8 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Compact generated whitespace while preserving syntax, identifiers, debug/
   component names, source maps/content and the complete package inventory.
-  Original baselines remain; Trading TESTING.md records the separately
-  user-approved, fixed 110-byte P5 Trading gzip allowance.
+  Trading TESTING.md retains the historical, unused 110-byte P5 gzip allowance
+  under its original guards; the current vector uses the normal gzip cap.
 - Make table ordering transitive: numeric values precede fixed-English text
   representations, then nullish values; handle NaN, infinities and stable ties.
   Use explicit en-US variant/numeric:false collation for SSR/hydration rather
@@ -24,13 +24,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   event delivery without recreating subscriptions/sockets or adding SSR
   browser-global probes/layout-effect warnings. Committed projection changes
   and hidden raw-row retention remain reactive.
+- Move the reviewed middleware serialization fix and its rendered cases into
+  Trading's app-owned inspector: preserve nested JSON values and empty-list
+  display without restoring tutorial dependencies to the pure/live tables.
+- Retain received HTTP status on response-body/envelope failures and on
+  post-header timeouts, including the injected P3 transport's outer deadline.
+- Add per-initialization `maxInitialReconnectAttempts` for bounded setup handoff,
+  without changing the post-open reconnect policy.
+- Preserve Trading create/start resource identity and received status, including
+  setup-deadline failures; explicit caller cancellation remains an abort.
+- Keep identified malformed/conflicting query IDs query-scoped, so healthy
+  subscriptions retain their rows and shared stream without a connection reset.
 - Preserve explicit SSE endpoint path/query trailing slashes, including signed
   or opaque query values, instead of applying server-base trimming to them.
   Provider identity uses the same separation: equivalent server bases stay
   stable, while meaningful endpoint changes replace the connection. Existing
   URL safety validation, authentication and read-only ownership are unchanged.
 
-### Current development-source integration
+### Current published-runtime integration
+- Record the actual user's archive-only P5 baseline of 175111 bytes, its first
+  failed measurement. All other size baselines, coverage floors and the 2%
+  rule remain unchanged; the complete earlier baseline remains historical.
+- Normally integrate the published core/functions 0.5.10, library 0.9.3,
+  SDK 0.11.3, index 0.6.4, middleware 0.5.11 and signed SSE 0.3.8 family.
+  Default source patches/pins/fetching are retired; the existing shared policy
+  verifies exact registry archives and effective source contents. P3 endpoint
+  and P4 identity/recovery/commit-only-key/SSR contracts, plus P5 table/DCE
+  corrections, are retained with the reviewed initialization/error fixes.
+- Preserve prior source-pin and ABI records as history. Released numeric,
+  default/lazy/index and output changes require complete authoritative
+  reconstruction, including integer and nested numeric keys. Source-rank
+  rebootstrap and the named codec do not repair malformed old records; no
+  automatic user-data migration or output-only clearing is performed.
+
+### Historical development-source integration
 - Normally integrate the approved exact `211d0f2a` engine 0.5.9 / registry
   library 0.9.2 / SDK 0.11.2 / index 0.6.3 / signed SSE 0.3.7 / native ABI
   0.14 selection while retaining P5 table/DCE fixes, P3 endpoint identity and P4 contracts,

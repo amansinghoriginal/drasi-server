@@ -50,13 +50,13 @@ export function TradingProvider({
         }
       });
       try {
-        await client.initialize();
+        await client.initialize({ maxInitialReconnectAttempts: 1 });
       } catch (error) {
         controller.signal.throwIfAborted();
         if (!canPrepareTrading(error, resolvedId)) throw error;
         await ensureTradingResources({ client, serverUrl: baseUrl, fetch: fetcher }, error, controller.signal);
         controller.signal.throwIfAborted();
-        await client.initialize(); // One setup pass, one retry. No blind create loop.
+        await client.initialize({ maxInitialReconnectAttempts: 1 }); // One setup pass, one retry.
       }
       controller.signal.throwIfAborted();
       ready = true;
