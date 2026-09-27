@@ -429,6 +429,46 @@ P2's measured whole-package coverage is 77.09% statements / 78.80% lines /
 they are not a claim that #163's final transport/result-contract coverage targets
 are finished.
 
+### Approved P3 review-work archive baseline
+
+For #206's initialization/error contracts, middleware viewer repair and related
+documentation, the user approved a one-time baseline update at the first
+failed measurement: archive **159,591** and declarations **57,550** bytes.
+One clarity-preserving JSDoc pass then measured archive **159,912** and
+declarations **57,290**. Both earlier overruns remain failed-gate evidence.
+The declaration result fits its original **57,381.12** cap, so the declaration
+approval is **not used**: its baseline remains **56,256**.
+
+Only `sizes.packageTarball` advances from **155,916** to the approved
+**159,591**, not the later 159,912-byte measurement. The normal 2% rule gives
+an archive cap of **162,782.82** bytes. All other size limits, coverage floors,
+source/map inclusions, images and test assertions remain unchanged.
+`baseline-metrics-p3-pre-review.json` preserves the entire original record
+from `b8f3a12a45b89923d875c8b7269d52907a39885e`, SHA-256
+`95147dcfd0205cbf92a13ffdb23507aa68a2b2a65463e9267594be0719091bb9`.
+Policy tests bind that history, the single changed size field and both cap
+boundaries. This is scoped to P3 review work, not a reusable allowance for
+later P4-P7 baselines or the separate P5 allowance.
+
+### Approved P4 merged-review baselines
+
+The user separately approved only P4's first measured archive **192,535** and
+combined declaration **71,207** baselines on September 27. Required inherited
+initialization/status/middleware contracts and the query-error-isolation fix
+caused this cost; no content, maps, declarations or tests were excluded.
+Those first measurements remain failures against the previous caps, not
+retroactive passes. They set the new baselines, not any later larger artifact.
+
+`baseline-metrics-p4-pre-review.json` preserves the full original P4 baseline
+from `d131b561e852bd6593925872f123cf21300df3bb`, SHA-256
+`46d8db7eb3ab6af2b6fba1e951abc362696f666514e766a1e9115c0065874d5f`.
+Only its archive and declaration size fields change in the active record,
+alongside the approval receipt. All other sizes, coverage floors, historical
+records and the normal 2% rule stay unchanged. New caps are **196,385.70** and
+**72,631.14** bytes; tests accept integer 196385/72631 and reject 196386/72632.
+The exact P3 review and pre-review records remain separate; its allowance is
+not transferred or compounded into P4, nor is this approval transferable onward.
+
 ### Historical P3 transport/type contract cost
 
 This is the original schema-2 measurement before the main-runtime integration.

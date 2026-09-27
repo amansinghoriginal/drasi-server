@@ -263,8 +263,17 @@ subscription's `.retry()` refresh only that subscription's REST baseline.
 Automatic transient snapshot retries are also query-local and do not disconnect
 other queries. A query-local retry cannot repair a failed shared connection.
 A direct `DrasiClient` has immutable configuration: construct/disconnect a new
-client for material changes. `initialize()` shares in-flight work and reuses a
-connected client. Its owner must dispose subscriptions and call `disconnect()`.
+client for material changes. `initialize(options?)` shares in-flight work and
+reuses a connected client. Its owner must dispose subscriptions and call `disconnect()`.
+
+`DrasiInitializeOptions.maxInitialReconnectAttempts` limits only pending
+initialization retries (nonnegative safe integer; omitted uses the normal
+policy, zero means none). Concurrent calls use the first call's options;
+later initializations select fresh options. After the first open, the normal
+reconnect policy applies unchanged. Trading passes `1` on its first and single
+post-setup initialization: one initial SSE failure can recover, while persistent
+Starting resources reach app-owned setup after one backoff and its existing
+60-second deadline applies. Invalid/auth/network errors never authorize setup.
 
 `DrasiClientProvider` instead binds an **app-owned** lifecycle. The binding
 does not initialize/disconnect, retry, provision or open a second connection.
@@ -543,6 +552,8 @@ callbacks, labels, icons and classes. Table props include `defaultSort`,
 `animateOnChange`, `actions`, `actionsWidth`, `headerActions`, `title`,
 `emptyMessage`, `codeSnippet` and table/header/row class hooks. Sorting,
 formatting, animations, fullscreen and code-view behavior are unchanged.
+The query viewer renders nonempty middleware records as JSON flow values,
+retaining kind/name/nested configuration; empty middleware remains omitted.
 Computed column strings remain supported, so `format`/`className` receive
 `(value: unknown, row: T)`. Use the typed row (as in the quickstart) or narrow
 the raw value; no unsafe cast is needed. `SortConfig` retains a string column
@@ -561,7 +572,7 @@ been redesigned. Consumers do not need Tailwind.
 
 ### Low-level clients
 
-`DrasiClient` exposes `initialize()`, `validateResources(signal?)`,
+`DrasiClient` exposes `initialize(options?)`, `validateResources(signal?)`,
 `getQuery(id, signal?)`, `getReaction(signal?)`, `getQueryConfig(id, signal?)`,
 `getQueryResults(id, signal?)`, `subscribe(id, onResult, onError?, onStateChange?)`,
 `getConnectionStatus()`, `onConnectionStatusChange(callback)`,
@@ -580,7 +591,7 @@ only the safe error code rather than silently swallowing a malformed snapshot.
 // @drasi-docs: client.ts
 import {
   DrasiClient, accumulateResult,
-  type DrasiError, type QuerySubscriptionState, type ResultRow, type RowKey,
+  type DrasiError, type DrasiInitializeOptions, type QuerySubscriptionState, type ResultRow, type RowKey,
 } from '@drasi/react/client';
 
 const readingKey: RowKey = raw => {
@@ -593,6 +604,7 @@ export async function monitorReadings(
   onRows: (rows: ResultRow[]) => void,
   onError: (error: DrasiError) => void,
   onStateChange?: (state: QuerySubscriptionState) => void,
+  initializeOptions: DrasiInitializeOptions = {},
 ) {
   const client = new DrasiClient({
     serverUrl: 'https://drasi.example', instanceId: 'analytics',
@@ -600,7 +612,7 @@ export async function monitorReadings(
     reaction: { id: 'events', endpoint: 'https://events.example/changes' },
   });
   try {
-    await client.initialize();
+    await client.initialize(initializeOptions);
   } catch (error) {
     await client.disconnect();
     throw error;
@@ -624,7 +636,7 @@ export async function monitorReadings(
 adds an optional read-only `validate(signal)` callback and `errorDetails` to
 the stream/auth/reconnect options. Direct use does not validate REST resources
 unless that callback is supplied and cannot infer their absence. It exposes
-`connect(queryIds, endpoint, signal?)`, `subscribe`, `getQueryError(queryId)`,
+`connect(queryIds, endpoint, signal?, maxInitialReconnectAttempts?)`, `subscribe`, `getQueryError(queryId)`,
 `getConnectionStatus`, `onConnectionStatusChange`, `isConnected` and `disconnect`.
 Its `subscribe` callback receives only normalized `QueryDelta`s and returns a
 plain cleanup function; it does not fetch snapshots or offer query-local REST
@@ -639,6 +651,11 @@ the shared connection status.
 Render `.message`; discriminate with `instanceof DrasiError` and `.code`.
 Safe messages do not include raw server details. Explicit cancellation is the
 original abort reason rather than a `DrasiError`.
+Received HTTP status survives JSON/envelope/body failures and timeouts after
+headers, including injected transports that ignore abort. Failures before
+headers do not invent a status. Trading's create/start failures also retain
+instance/kind/ID and received status through its active setup deadline; malformed
+successful start responses cannot be accepted as a racing success.
 
 | Code | Meaning / appropriate owner action |
 | --- | --- |

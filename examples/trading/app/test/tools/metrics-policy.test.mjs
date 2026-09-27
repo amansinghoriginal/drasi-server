@@ -4,6 +4,7 @@
 // You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
 
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -137,7 +138,7 @@ test('retains the P3 schema-2 record while counting its separately shipped Commo
 
 test('retains the P4 feature budget and schema-2 history while counting both actual declaration graphs', async () => {
   const historical = JSON.parse(await readFile(new URL('../fixtures/baseline-metrics-p4-v2.json', import.meta.url), 'utf8'));
-  const current = JSON.parse(await readFile(new URL('../fixtures/baseline-metrics.json', import.meta.url), 'utf8'));
+  const current = JSON.parse(await readFile(new URL('../fixtures/baseline-metrics-p4-pre-review.json', import.meta.url), 'utf8'));
   assert.equal(historical.schemaVersion, 2);
   assert.equal(historical.sizes.packageTypes, 34875);
   assert.equal(current.p4MeasurementChange.esmDeclarations, historical.sizes.packageTypes);
@@ -180,4 +181,77 @@ test('counts nested Trading chunks and CSS without counting source maps as execu
     tradingCss: 9,
     tradingCssGzip: ['main', 'theme'].reduce((bytes, content) => bytes + gzipSync(content).length, 0),
   });
+});
+
+test('applies the approved P3 archive baseline only and preserves the complete prior record', async () => {
+  const originalBytes = await readFile(new URL('../fixtures/baseline-metrics-p3-pre-review.json', import.meta.url));
+  const historical = JSON.parse(originalBytes);
+  const current = JSON.parse(await readFile(new URL('../fixtures/baseline-metrics-p3-review.json', import.meta.url), 'utf8'));
+  assert.equal(createHash('sha256').update(originalBytes).digest('hex'),
+    '95147dcfd0205cbf92a13ffdb23507aa68a2b2a65463e9267594be0719091bb9');
+  assert.equal(current.reviewBudgetChange.previousBaselineSha256,
+    createHash('sha256').update(originalBytes).digest('hex'));
+  assert.deepEqual(current.sizes, { ...historical.sizes, packageTarball: 159591 });
+  assert.equal(current.sizes.packageTypes, 56256);
+  assert.equal(current.reviewBudgetChange.approvedDeclarationBaselineNotUsed, 57550);
+  const { reviewBudgetChange: _receipt, ...withoutReceipt } = current;
+  assert.deepEqual({ ...withoutReceipt, sizes: historical.sizes }, historical);
+  assert.deepEqual(current.reviewBudgetChange.firstFailedMeasurement,
+    { packageTarball: 159591, packageTypes: 57550 });
+  assert.deepEqual(current.reviewBudgetChange.afterClarityMeasurement,
+    { packageTarball: 159912, packageTypes: 57290 });
+});
+
+test('keeps the same 2% rule on the approved archive and the original declaration baseline', async () => {
+  const current = JSON.parse(await readFile(new URL('../fixtures/baseline-metrics-p3-review.json', import.meta.url), 'utf8'));
+  assertBaseline({ ...current, sizes: { ...current.sizes, packageTarball: 162782, packageTypes: 57381 } }, current);
+  assert.throws(() => assertBaseline({
+    ...current, sizes: { ...current.sizes, packageTarball: 162783 },
+  }, current), /packageTarball grew more than 2%/);
+  assert.throws(() => assertBaseline({
+    ...current, sizes: { ...current.sizes, packageTypes: 57382 },
+  }, current), /packageTypes grew more than 2%/);
+});
+
+test('does not transfer the P3 review allowance into the active P4 budget', async () => {
+  const current = JSON.parse(await readFile(new URL('../fixtures/baseline-metrics.json', import.meta.url), 'utf8'));
+  const p3 = JSON.parse(await readFile(new URL('../fixtures/baseline-metrics-p3-review.json', import.meta.url), 'utf8'));
+  assert.match(current.reviewBudgetChange.scope, /^#207 \/ #163 Part B/);
+  assert.match(p3.reviewBudgetChange.scope, /^#206 \/ #163 Part A/);
+  assert.notEqual(current.reviewBudgetChange.approvedArchiveBaseline, p3.reviewBudgetChange.approvedArchiveBaseline);
+  assert.equal(current.artifactChange.part, 'B / P4');
+  assert.deepEqual(current.sizes, {
+    packageTarball: 192535, packageEsm: 98585, packageCjs: 106000, packageTypes: 71207,
+    packageCss: 10043, tradingJs: 250892, tradingJsGzip: 73795, tradingCss: 21034, tradingCssGzip: 5163,
+  });
+});
+
+test('limits the scoped P4 approval to two size fields and preserves the full original baseline', async () => {
+  const originalBytes = await readFile(new URL('../fixtures/baseline-metrics-p4-pre-review.json', import.meta.url));
+  const historical = JSON.parse(originalBytes);
+  const current = JSON.parse(await readFile(new URL('../fixtures/baseline-metrics.json', import.meta.url), 'utf8'));
+  const expected = { packageTarball: 192535, packageTypes: 71207 };
+  assert.equal(createHash('sha256').update(originalBytes).digest('hex'),
+    '46d8db7eb3ab6af2b6fba1e951abc362696f666514e766a1e9115c0065874d5f');
+  assert.equal(current.reviewBudgetChange.previousBaselineSha256,
+    createHash('sha256').update(originalBytes).digest('hex'));
+  assert.deepEqual(current.sizes, { ...historical.sizes, ...expected });
+  assert.deepEqual(current.reviewBudgetChange.firstFailedMeasurement, expected);
+  assert.equal(current.reviewBudgetChange.approvedArchiveBaseline, expected.packageTarball);
+  assert.equal(current.reviewBudgetChange.approvedDeclarationBaseline, expected.packageTypes);
+  const { reviewBudgetChange: _receipt, ...withoutReceipt } = current;
+  assert.deepEqual({ ...withoutReceipt, sizes: historical.sizes }, historical);
+  assert.throws(() => assertBaseline({ ...historical, sizes: { ...historical.sizes, ...expected } }, historical),
+    /packageTarball grew more than 2%/);
+});
+
+test('keeps the normal 2% integer boundaries on the approved P4 archive and declarations', async () => {
+  const current = JSON.parse(await readFile(new URL('../fixtures/baseline-metrics.json', import.meta.url), 'utf8'));
+  assertBaseline({ ...current, sizes: { ...current.sizes, packageTarball: 196385, packageTypes: 72631 } }, current);
+  assert.throws(() => assertBaseline({
+    ...current, sizes: { ...current.sizes, packageTarball: 196386 },
+  }, current), /packageTarball grew more than 2%/);
+  assert.throws(() => assertBaseline({
+    ...current, sizes: { ...current.sizes, packageTypes: 72632 },
+  }, current), /packageTypes grew more than 2%/);
 });

@@ -46,6 +46,12 @@ export interface DrasiClientOptions {
   reconnect?: ReconnectOptions;
 }
 
+/** Startup policy: first in-flight call wins; later initializations select new options. */
+export interface DrasiInitializeOptions {
+  /** Nonnegative safe integer; defaults to normal retries. Post-open reconnects are unchanged. */
+  maxInitialReconnectAttempts?: number;
+}
+
 /**
  * Read-only resource validation, snapshots and one multiplexed SSE connection.
  * It never creates, starts, stops, updates or deletes resources. Known overlap
@@ -140,6 +146,7 @@ export class DrasiClient {
           method: 'GET', headers, credentials: this.credentials,
           redirect: 'manual', signal: controller.signal,
         });
+        details.status = response.status;
         controller.signal.throwIfAborted();
         if (response.redirected) throw new DrasiError('INCOMPATIBLE_RESOURCE', details);
         return readResponse(response, details);
@@ -192,12 +199,14 @@ export class DrasiClient {
     return this.initialized;
   }
 
-  async initialize(): Promise<void> {
+  async initialize(options: DrasiInitializeOptions = {}): Promise<void> {
     if (this.initialized && this.sseClient.isConnected()) return;
     if (this.initPromise) return this.initPromise;
     const controller = new AbortController();
     this.initController = controller;
-    const promise = this.sseClient.connect([...this.queryIds], this.reaction.endpoint, controller.signal);
+    const promise = this.sseClient.connect(
+      [...this.queryIds], this.reaction.endpoint, controller.signal, options.maxInitialReconnectAttempts,
+    );
     this.initPromise = promise;
     try {
       await promise;

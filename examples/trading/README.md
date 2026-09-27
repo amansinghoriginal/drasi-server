@@ -294,7 +294,7 @@ import { TradingProvider } from '@/drasi/TradingProvider';
 ```
 
 Under the hood:
-1. `TradingProvider` attempts `DrasiClient.initialize()` with explicit instance,
+1. `TradingProvider` attempts `DrasiClient.initialize({ maxInitialReconnectAttempts: 1 })` with explicit instance,
    query IDs and `{ id, endpoint }` reaction references. The package only reads.
    `ensureTradingResources.ts` catches eligible typed failures and owns setup.
 2. The package's `DrasiSSEClient` maintains a **single** EventSource connection
@@ -314,6 +314,14 @@ available and 409/read validation otherwise. It has a 60-second deadline,
 10-second request timeouts, readiness polling and cancellation when the last
 consumer unmounts. Starting/bootstrapping resources are waited on, never started
 again. Partial success is retained and reused on a later explicit retry.
+The first connection and the one post-setup connection each allow only one
+initial retry; a persistent Starting result reaches the provisioner after one
+default 1-second backoff, not ten. Its setup deadline then remains 60 seconds.
+Once ready, all configured reconnect attempts remain available. Exhausted
+pre-ready network failures surface Retry rather than provisioning.
+Create/start and setup-deadline failures retain the active instance/resource
+identity and any received HTTP status. Caller cancellation keeps its abort
+identity and stops work without displaying an unmount error.
 
 Before writing, Trading checks existing known definitions: exact query text
 (ignoring outer whitespace), explicit **Cypher**, ordered source subscriptions

@@ -29,11 +29,11 @@ import {
   type SortConfig,
 } from '../src/components';
 import { DrasiProvider } from '../src/react/DrasiContext';
-import type { ResultRow } from '../src/client/types';
+import type { QueryMiddleware, ResultRow } from '../src/client/types';
 import type { UseDrasiQueryOptions } from '../src/react/types';
 import type { AnimationDirection } from '../src/react/useRowAnimation';
 import { fakeEventSourceFactory } from './FakeEventSource';
-import { ReadServer, json, refs } from './server';
+import { ReadServer, component, json, queryConfig, refs } from './server';
 
 interface Stock {
   symbol: string;
@@ -274,5 +274,66 @@ describe('QueryTable', () => {
     expect(screen.getAllByText('-')).toHaveLength(2);
     fireEvent.click(screen.getByRole('columnheader', { name: 'Value' }));
     expect(codes()).toEqual(['null', 'missing', 'numeric', 'two', 'ten']);
+  });
+
+  it.each<{ name: string; middleware: QueryMiddleware[] }>([
+    {
+      name: 'one structured entry',
+      middleware: [{ kind: 'map', name: 'rename', config: { field: 'temperature' } }],
+    },
+    {
+      name: 'multiple entries with nested configuration and quoted values',
+      middleware: [
+        {
+          kind: 'map',
+          name: 'first "quoted"',
+          config: {
+            nested: { path: 'readings["temperature"]', values: [true, false, null, 3.5, 'a,b', 'line\nbreak', '<tag>'] },
+          },
+        },
+        { kind: 'filter', name: 'second', config: { threshold: 20, enabled: false } },
+      ],
+    },
+    { name: 'an empty middleware list', middleware: [] },
+  ])('shows $name accurately in the real query code viewer', async ({ middleware }) => {
+    const server = new ReadServer();
+    const read = server.fetch.getMockImplementation()!;
+    server.fetch.mockImplementation(async (input, init) => {
+      const response = await read(input, init);
+      return String(input).endsWith('/queries/stocks?view=full')
+        ? json(component('queries', 'stocks', queryConfig('stocks', { middleware })))
+        : response;
+    });
+    const table = renderTable<Stock>({
+      queryId: 'stocks', title: 'Stocks', columns, rowKey: row => row.symbol,
+      queryOptions: stockOptions, codeSnippet: '<Stocks />',
+    }, [{ symbol: 'AAPL', price: 10 }], server);
+    await table.connect();
+    expect(screen.queryByRole('dialog')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'View code' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Stocks' });
+    const code = dialog.querySelector('pre code')?.textContent;
+    expect(code).toBeDefined();
+    expect(code).not.toContain('[object Object]');
+    const middlewareLine = code!.split('\n').find(line => line.startsWith('middleware: '));
+    if (middleware.length) {
+      expect(middlewareLine).toBeDefined();
+      expect(JSON.parse(middlewareLine!.slice('middleware: '.length))).toEqual(middleware);
+      expect(dialog.querySelector('tag')).toBeNull();
+    } else {
+      expect(middlewareLine).toBeUndefined();
+      expect(code).toBe([
+        'id: stocks', 'queryLanguage: Cypher', 'autoStart: true', '',
+        'query: |', '  MATCH (n) RETURN n',
+        'enableBootstrap: true', 'bootstrapBufferSize: 10000',
+      ].join('\n'));
+    }
+    expect(within(dialog).getByRole('tab', { name: 'Query Definition' }).getAttribute('aria-selected')).toBe('true');
+    expect(server.fetch.mock.calls.every(([, init]) => init?.method === 'GET')).toBe(true);
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.getByText('AAPL')).not.toBeNull();
+    table.unmount();
+    expect(table.factory.instances[0].closed).toBe(true);
   });
 });
